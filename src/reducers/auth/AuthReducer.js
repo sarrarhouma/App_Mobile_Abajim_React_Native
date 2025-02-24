@@ -63,20 +63,19 @@ const authReducer = (state = initialState, action) => {
             return {
                 ...state,
                 children: updatedChildren,
-                userHasKids: updatedChildren.length > 0, 
+                userHasKids: true, 
                 isLoading: false,
                 error: null,
-                activeChild: updatedChildren.length === 1 ? action.payload : state.activeChild, // ✅ If first child, auto-set
+                activeChild: state.activeChild || action.payload, // ✅ If first child, auto-set
             };
 
         case "SWITCH_ACTIVE_CHILD":
             return {
                 ...state,
-                activeChild: action.payload.child, // ✅ Update the active child
-                uthToken: action.payload.token,  // ✅ Update session token
-                children: state.children.length > 0 ? state.children : action.payload.children, // ✅ Preserve children list
-            };
-            
+                activeChild: action.payload.child, // ✅ Update active child
+                authToken: action.payload.token, // ✅ Update token
+                children: action.payload.children || state.children, // ✅ Ensure children persist
+            };  
             
         default:
             return state;

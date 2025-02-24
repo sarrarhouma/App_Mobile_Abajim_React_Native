@@ -169,69 +169,54 @@ export const login = (mobile, password, navigation) => {
             let token = await AsyncStorage.getItem("token");
 
             if (!token) {
-                console.warn("⚠️ No token found in AsyncStorage.");
+                console.warn("⚠️ No token found, skipping initialization.");
                 return;
             }
 
-            dispatch({
-                type: "LOGIN_SUCCESS",
-                payload: token,
-            });
+            dispatch({ type: "LOGIN_SUCCESS", payload: token });
 
             console.log("🔄 Fetching children from AsyncStorage...");
             let childrenData = await AsyncStorage.getItem("children");
-            let parsedChildren = childrenData ? JSON.parse(childrenData) : [];
+            let children = childrenData ? JSON.parse(childrenData) : [];
 
-            if (parsedChildren.length > 0) {
-                console.log("✅ Children found in AsyncStorage:", parsedChildren);
-                dispatch({
-                    type: "FETCH_CHILDREN_SUCCESS",
-                    payload: parsedChildren,
+            console.log("✅ Children loaded from AsyncStorage:", children);
+
+            if (!Array.isArray(children) || children.length === 0) {
+                console.warn("⚠️ No children found in AsyncStorage, fetching from API...");
+
+                // ✅ Fetch from API if AsyncStorage is empty
+                const childrenResponse = await fetch(`${API_URL}/enfants`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
                 });
+
+                if (childrenResponse.ok) {
+                    const latestChildren = await childrenResponse.json();
+
+                    if (Array.isArray(latestChildren) && latestChildren.length > 0) {
+                        console.log("🆕 Updating AsyncStorage with fresh children data...");
+                        await AsyncStorage.setItem("children", JSON.stringify(latestChildren));
+                        dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: latestChildren });
+                    } else {
+                        console.warn("⚠️ No children found in backend.");
+                        dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: [] });
+                    }
+                } else {
+                    console.warn("⚠️ Failed to fetch children from backend.");
+                }
+            } else {
+                dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: children });
             }
-
-            // ✅ Fetch the latest children data from the API
-            console.log("🔄 Fetching fresh children data from the API...");
-            const childrenResponse = await fetch(`${API_URL}/enfants`, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!childrenResponse.ok) {
-                console.warn("⚠️ Failed to fetch children from backend.");
-                return;
-            }
-
-            const latestChildren = await childrenResponse.json();
-
-            // ✅ Ensure fresh data is stored and compared before updating Redux
-            if (JSON.stringify(latestChildren) !== JSON.stringify(parsedChildren)) {
-                console.log("🆕 Updating AsyncStorage with fresh children data...");
-                await AsyncStorage.setItem("children", JSON.stringify(latestChildren));
-                dispatch({
-                    type: "FETCH_CHILDREN_SUCCESS",
-                    payload: latestChildren,
-                });
-            }
-            // ✅ Set first child as active if no active child is stored
-            const activeChild = await AsyncStorage.getItem("activeChild");
-            if (!activeChild && latestChildren.length > 0) {
-                console.log("🔄 Setting default active child:", latestChildren[0].full_name);
-                await AsyncStorage.setItem("activeChild", JSON.stringify(latestChildren[0]));
-                dispatch({
-                    type: "SWITCH_ACTIVE_CHILD",
-                    payload: latestChildren[0],
-                });
-            }
-
         } catch (error) {
             console.error("❌ Error in Init function:", error.message);
         }
     };
 };
+
+
 // 🔹 Add Child Action
 export const addChild = (childData, navigation) => async (dispatch, getState) => {
   try {
@@ -308,7 +293,6 @@ export const fetchChildren = () => async (dispatch, getState) => {
   }
 };
 
-
 // fetching documents by manuel_id 
 
 export const fetchDocumentByManuelId = (manuelId) => {
@@ -334,16 +318,14 @@ export const fetchDocumentByManuelId = (manuelId) => {
     }
   };
 };
-
-
 // switching betweeen kids accounts
 export const switchChild = (child) => {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     try {
       console.log(`🔄 Switching to child: ${child.full_name} (ID: ${child.id})`);
 
-      const parentToken = await AsyncStorage.getItem("token"); // ✅ Keep the parent's token for verification
-      if (!parentToken) {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
         throw new Error("User is not authenticated.");
       }
 
@@ -351,7 +333,7 @@ export const switchChild = (child) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${parentToken}`, // ✅ Use parent's token to verify the switch
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ childId: child.id }),
       });
@@ -364,23 +346,43 @@ export const switchChild = (child) => {
 
       console.log("✅ Child switched successfully:", resData);
 
-      // ✅ Store new token and active child
-      await AsyncStorage.setItem("token", resData.token); // 🔄 Store child's token
+      // ✅ Save the new token and active child
+      await AsyncStorage.setItem("tokenChild", resData.token);
       await AsyncStorage.setItem("activeChild", JSON.stringify(resData.child));
 
+      // ✅ Update Redux Store
       dispatch({
         type: "SWITCH_ACTIVE_CHILD",
-        payload: {
-          child: resData.child,
-          token: resData.token, // ✅ Update token for API calls
+        payload: { 
+          child: resData.child, 
+          token: resData.token, 
         },
       });
 
-    } catch (error) {
+      const response2 = await fetch(`${API_URL}/enfants`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }
+    });
+    const resData2 = await response2.json();
+      // ✅ Ensure children list is stored in AsyncStorage
+      if (resData2) {
+        console.log("✅ Updated children list after switching:", resData2);
+        await AsyncStorage.setItem("children", JSON.stringify(resData2));
+        
+        // ✅ Update Redux Store with new children list
+        dispatch({
+          type: "FETCH_CHILDREN_SUCCESS",
+          payload: resData2
+        });
+      }
+      else {
+        console.log("empty children");      }
+      } 
+    catch (error) {
       console.error("❌ Error switching child:", error.message);
     }
   };
 };
-
-
-

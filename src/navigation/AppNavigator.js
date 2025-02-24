@@ -13,7 +13,8 @@ import VerificationScreen from "../screens/VerificationScreen";
 import BooksScreen from "../screens/BooksScreen";
 import AddKidsScreen from "../screens/AddKidsScreen";
 import DocumentScreen from "../screens/DocumentScreen";
-import Lessons from "../screens/lessonsScreen";
+import LessonsScreen from "../screens/lessonsScreen";
+import LiveSessionScreen from "../screens/LiveSessionScreen";
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -23,7 +24,10 @@ const Stack = createNativeStackNavigator();
 const AppNavigator = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.authToken);
+  // const children = useSelector((state) => state.auth.children) || [];
   const children = useSelector((state) => state.auth.children) || [];
+const activeChild = useSelector((state) => state.auth.activeChild); // ✅ Ensures active child is checked
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +43,7 @@ const AppNavigator = () => {
     };
 
     initializeApp();
-  }, [dispatch, token]);
+  }, [dispatch, token, children.length]);
 
   if (loading) {
     return (
@@ -71,8 +75,8 @@ const AppNavigator = () => {
             <Stack.Screen name="DocumentScreen" component={DocumentScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: " إعدادات" }} />
-            <Stack.Screen name="Lessons" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
-            <Stack.Screen name="LiveSession" component={SettingsScreen} options={{ title: " إعدادات" }} />
+            <Stack.Screen name="Lessons" component={LessonsScreen} options={{ title: " الدروس الإضافيّة " }} />
+            <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ title: " الحصص المباشرة " }} />
             
           </>
         )}
