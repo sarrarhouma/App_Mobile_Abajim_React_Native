@@ -7,20 +7,24 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
-import { addChild } from "../reducers/auth/AuthAction"; // ✅ Ajout de l'action Redux
+import { useDispatch, useSelector } from "react-redux";
+import { addChild } from "../reducers/auth/AuthAction"; // ✅ Import Redux Action
 
 const AddKidsScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const loading = useSelector((state) => state.auth.isLoading);
+  const childrenCount = useSelector((state) => state.auth.children.length); // ✅ Track number of children
 
-  // ✅ États pour stocker les informations de l'enfant
+  const [kidsList, setKidsList] = useState([]); // ✅ Store added kids temporarily
   const [childName, setChildName] = useState("");
   const [selectedGender, setSelectedGender] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
 
+  // ✅ Level icons mapping
   const levelIcons = {
     1: require("../../assets/icons/one.png"),
     2: require("../../assets/icons/two.png"),
@@ -30,19 +34,51 @@ const AddKidsScreen = () => {
     6: require("../../assets/icons/six.png"),
   };
 
-  // ✅ Fonction pour ajouter l'enfant
+  // ✅ Function to map frontend levels (1-6) to backend levels (6-11)
+  const mapLevelToBackend = (level) => level + 5;
+
+  // ✅ Function to convert gender format for API
+  const formatGender = (gender) => (gender === "male" ? "Garçon" : "Fille");
+
+  // ✅ Handle adding a child
   const handleAddChild = () => {
     if (!childName || !selectedGender || !selectedLevel) {
       Alert.alert("خطأ", "يرجى ملء جميع الحقول قبل إضافة الطفل");
       return;
     }
 
-    // ✅ Ajout de l'enfant dans Redux
-    dispatch(addChild({ name: childName, gender: selectedGender, level: selectedLevel }));
+    if (kidsList.length >= 4) {
+      Alert.alert("خطأ", "لا يمكنك إضافة أكثر من 4 أطفال.");
+      return;
+    }
 
-    Alert.alert("نجاح", "تمت إضافة الطفل بنجاح!");
+    const backendLevelId = mapLevelToBackend(selectedLevel);
 
-    // ✅ Navigation vers l'écran "Books"
+    const newChild = {
+      Nom: childName,
+      sexe: formatGender(selectedGender),
+      level_id: backendLevelId,
+    };
+
+    setKidsList([...kidsList, newChild]); // ✅ Add child to local list
+    setChildName("");
+    setSelectedGender(null);
+    setSelectedLevel(null);
+
+    console.log("✅ Child Added Locally:", newChild);
+
+    // ✅ Automatically navigate to Books if max 4 kids are added
+    if (kidsList.length + 1 === 4) {
+      handleSubmitAll();
+    }
+  };
+
+  // ✅ Handle submitting all children to backend
+  const handleSubmitAll = () => {
+    console.log("🔄 Sending Kids to API...");
+    kidsList.forEach((child) => dispatch(addChild(child, navigation)));
+
+    // ✅ Navigate to Books after all kids are added
     navigation.navigate("Books");
   };
 
@@ -115,28 +151,47 @@ const AddKidsScreen = () => {
         </View>
       </View>
 
+      {/* List of Added Kids */}
+      <FlatList
+        data={kidsList}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.kidItem}>
+            <Text style={styles.kidText}>{item.Nom} - {item.sexe} - مستوى {item.level_id - 5}</Text>
+          </View>
+        )}
+      />
+
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.addButton} onPress={handleAddChild}>
-          <Text style={styles.buttonText}>إضافة</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddChild} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? "جاري الإضافة..." : "إضافة طفل"}</Text>
         </TouchableOpacity>
+
+        {/* Show "Next" button only if at least 1 kid is added */}
+        {kidsList.length > 0 && (
+          <TouchableOpacity style={styles.addButton} onPress={handleSubmitAll}>
+            <Text style={styles.buttonText}>التالي</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 };
 
+// ✅ Styles remain unchanged
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5", padding: 20, alignItems: "center" },
   header: { marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: "bold", textAlign: "center", color: "#1F3B64" },
-  image: { width: 250, height: 150, resizeMode: "contain", marginBottom: 20 },
+  title: { fontSize: 22, fontWeight: "bold", textAlign: "center", color: "#1F3B64" },
+  image: { width: 230, height: 150, resizeMode: "contain", marginBottom: 20 },
   label: { fontSize: 20, fontWeight: "bold", marginBottom: 10, alignSelf: "flex-end", color: "#1F3B64" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
     backgroundColor: "#FFF",
-    padding: 14,
+    padding: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#1F3B64",
@@ -146,7 +201,7 @@ const styles = StyleSheet.create({
   genderContainer: { flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 },
   genderButton: {
     backgroundColor: "#E0E0E0",
-    padding: 14,
+    padding: 10,
     borderRadius: 12,
     marginHorizontal: 25,
     alignItems: "center",
@@ -158,8 +213,8 @@ const styles = StyleSheet.create({
   levelContainer: { flexDirection: "column", alignItems: "center", marginBottom: 20 },
   levelRow: { flexDirection: "row", justifyContent: "center", marginBottom: 10 },
   levelButton: {
-    width: 80,
-    height: 80,
+    width: 75,
+    height: 70,
     backgroundColor: "#E0E0E0",
     borderRadius: 40,
     alignItems: "center",
@@ -171,10 +226,11 @@ const styles = StyleSheet.create({
   buttonContainer: { flexDirection: "row", justifyContent: "center", width: "100%" },
   addButton: {
     backgroundColor: "#1F3B64",
-    padding: 15,
+    padding: 13,
     borderRadius: 12,
     alignItems: "center",
-    width: "60%",
+    width: "45%",
+     margin: 7 
   },
   buttonText: { fontSize: 20, color: "#FFF", fontWeight: "bold" },
 });
