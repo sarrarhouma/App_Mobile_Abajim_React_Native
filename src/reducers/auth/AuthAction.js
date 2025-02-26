@@ -1,6 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://4fc7-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://661d-196-179-217-81.ngrok-free.app/api'; 
 import { Alert } from "react-native";
+
+
+export const FETCH_CORRECTION_VIDEO_REQUEST = "FETCH_CORRECTION_VIDEO_REQUEST";
+export const FETCH_CORRECTION_VIDEO_SUCCESS = "FETCH_CORRECTION_VIDEO_SUCCESS";
+export const FETCH_CORRECTION_VIDEO_FAILURE = "FETCH_CORRECTION_VIDEO_FAILURE";
 
 // register new user
 export const register = (fullName, mobile, password, role_id, navigation) => {
@@ -32,7 +37,7 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
         throw new Error("Aucun token reçu. Vérifie le backend.");
       }
 
-      console.log("✅ Inscription réussie !");
+
       Alert.alert("Succès", "Inscription réussie !");
 
       // ✅ Store the token
@@ -43,8 +48,6 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
         type: "LOGIN_SUCCESS",
         payload: resData.token, 
       });
-
-      console.log("🔄 Vérification du nombre d'enfants...");
 
       // ✅ Fetch children count immediately after registration
       const childrenResponse = await fetch(`${API_URL}/enfants`, {
@@ -65,13 +68,11 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
 
       // ✅ Navigate after fetching children
       if (childrenData.length === 0) {
-        console.log("🟡 Aucun enfant trouvé. Redirection vers AddKids...");
         navigation.reset({
           index: 0,
           routes: [{ name: "AddKids" }],
         });
       } else {
-        console.log("🟢 Enfants trouvés. Redirection vers Books...");
         navigation.reset({
           index: 0,
           routes: [{ name: "Books" }],
@@ -174,8 +175,6 @@ export const login = (mobile, password, navigation) => {
             }
 
             dispatch({ type: "LOGIN_SUCCESS", payload: token });
-
-            console.log("🔄 Fetching children from AsyncStorage...");
             let childrenData = await AsyncStorage.getItem("children");
             let children = childrenData ? JSON.parse(childrenData) : [];
 
@@ -197,7 +196,6 @@ export const login = (mobile, password, navigation) => {
                     const latestChildren = await childrenResponse.json();
 
                     if (Array.isArray(latestChildren) && latestChildren.length > 0) {
-                        console.log("🆕 Updating AsyncStorage with fresh children data...");
                         await AsyncStorage.setItem("children", JSON.stringify(latestChildren));
                         dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: latestChildren });
                     } else {
@@ -226,8 +224,6 @@ export const addChild = (childData, navigation) => async (dispatch, getState) =>
       }
 
       dispatch({ type: "AUTH_LOADING" });
-
-      console.log("🔄 Sending Add Child Request...");
       
       const response = await fetch(`${API_URL}/enfants/add`, {
           method: "POST",
@@ -241,7 +237,6 @@ export const addChild = (childData, navigation) => async (dispatch, getState) =>
       const resData = await response.json();
       
       if (response.ok) {
-          console.log("✅ Child added:", resData);
           dispatch({ type: "ADD_CHILD_SUCCESS", payload: resData.enfant });
 
           navigation.navigate("Books");  // Redirect to books page after adding a child
@@ -266,8 +261,6 @@ export const fetchChildren = () => async (dispatch, getState) => {
       }
 
       dispatch({ type: "AUTH_LOADING" });
-
-      console.log("🔄 Fetching children...");
 
       const response = await fetch(`${API_URL}/enfants`, {
           method: "GET",
@@ -344,7 +337,7 @@ export const switchChild = (child) => {
         throw new Error(resData.error || "Failed to switch child.");
       }
 
-      console.log("✅ Child switched successfully:", resData);
+      //console.log("✅ Child switched successfully:", resData);
 
       // ✅ Save the new token and active child
       await AsyncStorage.setItem("tokenChild", resData.token);
@@ -358,7 +351,6 @@ export const switchChild = (child) => {
           token: resData.token, 
         },
       });
-
       const response2 = await fetch(`${API_URL}/enfants`, {
         method: "GET",
         headers: {
@@ -369,7 +361,7 @@ export const switchChild = (child) => {
     const resData2 = await response2.json();
       // ✅ Ensure children list is stored in AsyncStorage
       if (resData2) {
-        console.log("✅ Updated children list after switching:", resData2);
+       // console.log("✅ Updated children list after switching:", resData2);
         await AsyncStorage.setItem("children", JSON.stringify(resData2));
         
         // ✅ Update Redux Store with new children list
@@ -378,11 +370,91 @@ export const switchChild = (child) => {
           payload: resData2
         });
       }
-      else {
-        console.log("empty children");      }
+      // else {
+      //   console.log("empty children");      }
       } 
     catch (error) {
       console.error("❌ Error switching child:", error.message);
     }
   };
+};
+
+// ✅ Fetch Correction Video with Authentication
+export const fetchCorrectionVideoUrl = (manuelId, icon, page) => async (dispatch) => {
+  dispatch({ type: "FETCH_CORRECTION_VIDEO_REQUEST" });
+
+  try {
+    const token = await AsyncStorage.getItem("token"); // ✅ Get auth token
+    console.log("🔑 Retrieved Token:", token); // Log the token
+
+    if (!token) {
+      console.error("❌ No auth token found");
+      dispatch({ type: "FETCH_CORRECTION_VIDEO_FAILURE", payload: "Unauthorized access (No token)" });
+      return;
+    }
+
+
+      const apiUrl = `${API_URL}/documents/correction-video/${manuelId}/${icon}/${page}`;
+    console.log("📡 Sending Request to:", apiUrl); // Log API URL
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // ✅ Include authentication token
+      },
+    });
+
+    console.log("📥 API Response Status:", response.status); // Log response status
+
+    const data = await response.json();
+    console.log("📤 API Response Data:", data); // Log response data
+
+    if (response.ok && data.correctionVideoUrl) {
+      console.log("✅ Correction Video URL Found:", data.correctionVideoUrl);
+      dispatch({ type: "FETCH_CORRECTION_VIDEO_SUCCESS", payload: data.correctionVideoUrl });
+    } else {
+      console.error("❌ API Error:", data);
+      dispatch({ type: "FETCH_CORRECTION_VIDEO_FAILURE", payload: data.error || "Failed to fetch video" });
+    }
+  } catch (error) {
+    console.error("❌ Error fetching correction video:", error);
+    dispatch({ type: "FETCH_CORRECTION_VIDEO_FAILURE", payload: error.message });
+  }
+};
+      
+ //fetch parent who logged in  informations 
+
+ // 🔹 Fetch Parent Information
+export const fetchParentInfo = () => async (dispatch) => {
+  dispatch({ type: "FETCH_PARENT_INFO_REQUEST" });
+
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    if (!token) {
+      console.error("❌ No auth token found");
+      dispatch({ type: "FETCH_PARENT_INFO_FAILURE", payload: "Unauthorized access (No token)" });
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/users/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`, // ✅ Send authentication token
+      },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      dispatch({ type: "FETCH_PARENT_INFO_SUCCESS", payload: data });
+    } else {
+      console.error("❌ API Error:", data);
+      dispatch({ type: "FETCH_PARENT_INFO_FAILURE", payload: data.error || "Failed to fetch parent info" });
+    }
+  } catch (error) {
+    console.error("❌ Error fetching parent info:", error);
+    dispatch({ type: "FETCH_PARENT_INFO_FAILURE", payload: error.message });
+  }
 };

@@ -74,7 +74,7 @@ const activeChild = useSelector((state) => state.auth.activeChild); // ✅ Ensur
             <Stack.Screen name="Books" component={BooksScreen} options={{ title: "الكتب المدرسية" }} />
             <Stack.Screen name="DocumentScreen" component={DocumentScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: " إعدادات" }} />
+            <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Lessons" component={LessonsScreen} options={{ title: " الدروس الإضافيّة " }} />
             <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ title: " الحصص المباشرة " }} />
             

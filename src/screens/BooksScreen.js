@@ -46,7 +46,6 @@ const BooksScreen = () => {
 
   useEffect(() => {
     if (activeChild?.level_id) {
-      console.log("the children 555 " + children);
       fetchManuelsByLevel(activeChild.level_id);
     }
   }, [activeChild]);
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
   bookImage: { width: 160, height: 170, borderRadius: 10 },
 
   bookTitle: {
-    fontSize: 15,
+    fontSize: 13,
     marginTop: 8,
     color: "#1F3B64",
     fontWeight: "bold",
