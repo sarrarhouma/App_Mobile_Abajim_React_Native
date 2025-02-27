@@ -15,31 +15,27 @@ import AddKidsScreen from "../screens/AddKidsScreen";
 import DocumentScreen from "../screens/DocumentScreen";
 import LessonsScreen from "../screens/lessonsScreen";
 import LiveSessionScreen from "../screens/LiveSessionScreen";
+import SettingsNavigator from "../navigation/SettingsNavigator"; // ✅ Corrected
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
-import SettingsScreen from "../screens/SettingsScreen";
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.authToken);
-  // const children = useSelector((state) => state.auth.children) || [];
   const children = useSelector((state) => state.auth.children) || [];
-const activeChild = useSelector((state) => state.auth.activeChild); // ✅ Ensures active child is checked
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initializeApp = async () => {
-      await dispatch(Init()); 
-  
+      await dispatch(Init());
+
       if (token) {
-        await dispatch(fetchChildren());  // ✅ Ensure children are loaded
+        await dispatch(fetchChildren()); // ✅ Ensure children are loaded
       }
-      console.log("Number of children:", children.length); // ✅ Initialize auth state
-       
-      setLoading(false);  // ✅ Done loading
+      setLoading(false);
     };
 
     initializeApp();
@@ -54,11 +50,8 @@ const activeChild = useSelector((state) => state.auth.activeChild); // ✅ Ensur
   }
 
   return (
-    
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={token ? (children.length === 0 ? "AddKids" : "Books") : "Welcome"}       
-      >       
+      <Stack.Navigator initialRouteName={token ? (children.length === 0 ? "AddKids" : "Books") : "Welcome"}>
         {!token ? (
           <>
             {/* User NOT logged in */}
@@ -74,14 +67,14 @@ const activeChild = useSelector((state) => state.auth.activeChild); // ✅ Ensur
             <Stack.Screen name="Books" component={BooksScreen} options={{ title: "الكتب المدرسية" }} />
             <Stack.Screen name="DocumentScreen" component={DocumentScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Settings" component={SettingsNavigator} options={{ headerShown: false }} /> 
             <Stack.Screen name="Lessons" component={LessonsScreen} options={{ title: " الدروس الإضافيّة " }} />
             <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ title: " الحصص المباشرة " }} />
-            
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+
 export default AppNavigator;

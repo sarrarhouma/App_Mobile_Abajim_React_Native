@@ -249,6 +249,92 @@ export const addChild = (childData, navigation) => async (dispatch, getState) =>
       dispatch({ type: "ADD_CHILD_FAILURE", error: error.message });
   }
 };
+// ✅ **Update Child Action**
+export const updateChild = (childData, callback) => async (dispatch) => {
+  dispatch({ type: "UPDATE_CHILD_REQUEST" });
+
+  try {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) {
+      throw new Error("User is not authenticated.");
+    }
+
+    console.log("🔄 Updating Child Data:", childData);
+
+    const response = await fetch(`${API_URL}/enfants/update/${childData.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nom: childData.nom, // ✅ Ensure it matches the API expected key
+        level_id: childData.level_id,
+      }),
+    });
+
+    const resData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(resData.error || "Failed to update child.");
+    }
+    dispatch({
+      type: "UPDATE_CHILD_SUCCESS",
+      payload: resData.enfant, // ✅ Ensure correct response data
+    });
+
+    dispatch(fetchChildren()); // ✅ Refresh children list after update
+
+    if (callback) callback(true); // ✅ Execute callback after success
+  } catch (error) {
+    console.error("❌ Error updating child:", error.message);
+    dispatch({
+      type: "UPDATE_CHILD_FAILURE",
+      payload: error.message,
+    });
+
+    if (callback) callback(false); // ✅ Execute callback with failure
+  }
+};
+
+// 🔹 Supprimer un enfant
+export const deleteChild = (childId) => async (dispatch, getState) => {
+  try {
+    const token = await AsyncStorage.getItem("token"); // ✅ Récupérer le token du parent
+
+    if (!token) {
+      throw new Error("Utilisateur non authentifié.");
+    }
+
+    dispatch({ type: "AUTH_LOADING" });
+
+    const response = await fetch(`${API_URL}/enfants/delete/${childId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const resData = await response.json();
+
+    if (response.ok) {
+      dispatch({ type: "DELETE_CHILD_SUCCESS", payload: childId });
+
+      dispatch(fetchChildren()); // ✅ Rafraîchir la liste des enfants après suppression
+
+      Alert.alert("✅ تم حذف الطفل", "تم حذف الطفل بنجاح.");
+    } else {
+      console.error("❌ فشل في حذف الطفل :", resData.error);
+      dispatch({ type: "DELETE_CHILD_FAILURE", error: resData.error });
+      Alert.alert("❌ Erreur", resData.error || "Échec de la suppression de l'enfant.");
+    }
+  } catch (error) {
+    console.error("❌ حدث خطأ أثناء حذف الطفل", error.message);
+    dispatch({ type: "DELETE_CHILD_FAILURE", error: error.message });
+    Alert.alert("❌ خطأ",  "حدث خطأ أثناء الحذف.");
+  }
+};
 
 // ✅ Fetch Children (Updated to use the new `users` table)
 export const fetchChildren = () => async (dispatch, getState) => {

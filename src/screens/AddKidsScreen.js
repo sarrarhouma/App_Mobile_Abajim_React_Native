@@ -9,20 +9,23 @@ import {
   Alert,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute  } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { addChild } from "../reducers/auth/AuthAction"; // ✅ Import Redux Action
+import { addChild, updateChild  } from "../reducers/auth/AuthAction"; // ✅ Import Redux Action
 
 const AddKidsScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const loading = useSelector((state) => state.auth.isLoading);
   const childrenCount = useSelector((state) => state.auth.children.length); // ✅ Track number of children
+  const route = useRoute();
+const existingChild = route.params?.child || null;
+
 
   const [kidsList, setKidsList] = useState([]); // ✅ Store added kids temporarily
-  const [childName, setChildName] = useState("");
-  const [selectedGender, setSelectedGender] = useState(null);
-  const [selectedLevel, setSelectedLevel] = useState(null);
+  const [childName, setChildName] = useState(existingChild?.full_name || "");
+  const [selectedGender, setSelectedGender] = useState( existingChild?.sexe === "Garçon" ? "male" : existingChild?.sexe === "Fille" ? "female" : null);
+  const [selectedLevel, setSelectedLevel] = useState(existingChild ? existingChild.level_id - 5 : null);
 
   // ✅ Level icons mapping
   const levelIcons = {
@@ -41,37 +44,40 @@ const AddKidsScreen = () => {
   const formatGender = (gender) => (gender === "male" ? "Garçon" : "Fille");
 
   // ✅ Handle adding a child
-  const handleAddChild = () => {
+  const handleSaveChild = () => {
     if (!childName || !selectedGender || !selectedLevel) {
-      Alert.alert("خطأ", "يرجى ملء جميع الحقول قبل إضافة الطفل");
+      Alert.alert("⚠️ خطأ", "يرجى ملء جميع الحقول قبل المتابعة");
       return;
     }
-
-    if (kidsList.length >= 4) {
-      Alert.alert("خطأ", "لا يمكنك إضافة أكثر من 4 أطفال.");
-      return;
-    }
-
+  
     const backendLevelId = mapLevelToBackend(selectedLevel);
-
-    const newChild = {
-      Nom: childName,
-      sexe: formatGender(selectedGender),
-      level_id: backendLevelId,
-    };
-
-    setKidsList([...kidsList, newChild]); // ✅ Add child to local list
-    setChildName("");
-    setSelectedGender(null);
-    setSelectedLevel(null);
-
-    console.log("✅ Child Added Locally:", newChild);
-
-    // ✅ Automatically navigate to Books if max 4 kids are added
-    if (kidsList.length + 1 === 4) {
-      handleSubmitAll();
+  
+    if (existingChild) {
+      // ✅ Mode mise à jour
+      const updatedChild = {
+        id: existingChild.id,
+        nom: childName,
+        level_id: backendLevelId,
+      };
+  
+      console.log("🔄 Updating Child:", updatedChild);
+      dispatch(updateChild(updatedChild, () => {
+        Alert.alert("✅ تم تحديث الطفل بنجاح");
+        navigation.navigate("Settings"); // ✅ Navigate back to Settings after update
+      }));
+    } else {
+      // ✅ Mode ajout
+      const newChild = {
+        Nom: childName,
+        sexe: formatGender(selectedGender),
+        level_id: backendLevelId,
+      };
+  
+      console.log("✅ Adding New Child:", newChild);
+      dispatch(addChild(newChild, navigation));
     }
   };
+  
 
   // ✅ Handle submitting all children to backend
   const handleSubmitAll = () => {
@@ -164,9 +170,12 @@ const AddKidsScreen = () => {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.addButton} onPress={handleAddChild} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? "جاري الإضافة..." : "إضافة طفل"}</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.addButton} onPress={handleSaveChild} disabled={loading}>
+  <Text style={styles.buttonText}>
+    {loading ? "جاري الحفظ..." : existingChild ? "تحديث الطفل" : "إضافة طفل"}
+  </Text>
+</TouchableOpacity>
+
 
         {/* Show "Next" button only if at least 1 kid is added */}
         {kidsList.length > 0 && (
