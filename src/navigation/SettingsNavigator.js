@@ -7,6 +7,7 @@ import NotificationsScreen from "../screens/NotificationsScreen";
 import MyCardScreen from "../screens/MyCardScreen";
 import ForgetPasswordScreen from "../screens/forgetPasswordScreen";
 import VerificationScreen from "../screens/VerificationScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen"; 
 import SignInScreen from "../screens/SignInScreen";
 
 const Stack = createStackNavigator();
@@ -21,6 +22,7 @@ const SettingsNavigator = () => {
       <Stack.Screen name="MyCard" component={MyCardScreen} />
       <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} />
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
+      <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
     </Stack.Navigator>
   );

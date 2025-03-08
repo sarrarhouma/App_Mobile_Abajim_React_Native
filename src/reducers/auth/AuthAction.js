@@ -149,36 +149,99 @@ export const login = (mobile, password, navigation) => {
     }
   };
 };
+// Actions pour la réinitialisation du mot de passe
+export const SEND_OTP_REQUEST = "SEND_OTP_REQUEST";
+export const SEND_OTP_SUCCESS = "SEND_OTP_SUCCESS";
+export const SEND_OTP_FAILURE = "SEND_OTP_FAILURE";
 
-// reset password 
-export const resetPassword = (mobile, newPassword, callback) => async (dispatch) => {
+export const VERIFY_OTP_REQUEST = "VERIFY_OTP_REQUEST";
+export const VERIFY_OTP_SUCCESS = "VERIFY_OTP_SUCCESS";
+export const VERIFY_OTP_FAILURE = "VERIFY_OTP_FAILURE";
+
+export const RESET_PASSWORD_REQUEST = "RESET_PASSWORD_REQUEST";
+export const RESET_PASSWORD_SUCCESS = "RESET_PASSWORD_SUCCESS";
+export const RESET_PASSWORD_FAILURE = "RESET_PASSWORD_FAILURE";
+
+// ✅ Envoi OTP
+export const sendOtp = (mobile, navigation) => async (dispatch) => {
+  dispatch({ type: SEND_OTP_REQUEST });
+
   try {
-    dispatch({ type: "AUTH_LOADING" });
+    const response = await fetch(`${API_URL}/users/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mobile }),
+    });
 
+    const resData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(resData.message || "Échec de l’envoi de l’OTP.");
+    }
+
+    dispatch({ type: SEND_OTP_SUCCESS });
+    Alert.alert("نجاح", "تم إرسال رمز التحقق إلى هاتفك.");
+    navigation.navigate("VerificationScreen", { phone: mobile });
+  } catch (error) {
+    dispatch({ type: SEND_OTP_FAILURE, payload: error.message });
+    Alert.alert("Erreur", error.message);
+  }
+};
+
+// ✅ Vérification OTP
+export const verifyOtp = (mobile, otp, navigation) => async (dispatch) => {
+  dispatch({ type: VERIFY_OTP_REQUEST });
+
+  try {
+    const response = await fetch(`${API_URL}/users/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mobile, otp }),
+    });
+
+    const resData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(resData.message || "OTP invalide.");
+    }
+
+    dispatch({ type: VERIFY_OTP_SUCCESS });
+    Alert.alert("Succès", "OTP validé avec succès.");
+    navigation.navigate("NewPasswordScreen", { phone: mobile });
+  } catch (error) {
+    dispatch({ type: VERIFY_OTP_FAILURE, payload: error.message });
+    Alert.alert("Erreur", error.message);
+  }
+};
+
+// ✅ Réinitialisation du mot de passe
+export const resetPassword = (mobile, newPassword, navigation) => async (dispatch) => {
+  dispatch({ type: RESET_PASSWORD_REQUEST });
+
+  try {
     const response = await fetch(`${API_URL}/users/reset-password`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mobile, newPassword }),
     });
 
     const resData = await response.json();
 
-    if (response.ok) {
-      dispatch({ type: "RESET_PASSWORD_SUCCESS" });
-      Alert.alert("✅ تم إعادة تعيين كلمة المرور بنجاح!");
-      if (callback) callback(true);
-    } else {
+    if (!response.ok) {
       throw new Error(resData.message || "Échec de la réinitialisation du mot de passe.");
     }
+
+    dispatch({ type: RESET_PASSWORD_SUCCESS });
+    Alert.alert("✅ تم إعادة تعيين كلمة المرور بنجاح!");
+
+    navigation.navigate("SignIn");
   } catch (error) {
-    console.error("❌ Erreur de réinitialisation du mot de passe :", error.message);
-    dispatch({ type: "RESET_PASSWORD_FAILURE", payload: error.message });
+    dispatch({ type: RESET_PASSWORD_FAILURE, payload: error.message });
     Alert.alert("❌ فشل إعادة تعيين كلمة المرور، حاول مرة أخرى.");
-    if (callback) callback(false);
   }
 };
+
+
 
   // 🔹 Logout Action
   export const Logout = () => {

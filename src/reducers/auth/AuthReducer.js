@@ -10,6 +10,7 @@ const initialState = {
     correctionVideoUrl: null, // ✅ Store correction video URL
     parentInfo: null,
     webinars: [], // ✅ Added webinars state
+    otpVerified: false,
 };
 
 const authReducer = (state = initialState, action) => {
@@ -23,7 +24,47 @@ const authReducer = (state = initialState, action) => {
                 isLoading: true,
                 error: null,
             };
-
+        case "SEND_OTP_REQUEST":
+        case "VERIFY_OTP_REQUEST":
+        case "RESET_PASSWORD_REQUEST":
+            return {
+                ...state,
+                isLoading: true,
+                error: null,
+            };
+        
+        case "SEND_OTP_SUCCESS":
+            return {
+                ...state,
+                isLoading: false,
+                error: null,
+            };
+        
+        case "VERIFY_OTP_SUCCESS":
+            return {
+                ...state,
+                otpVerified: true,
+                isLoading: false,
+                error: null,
+            };
+        
+        case "RESET_PASSWORD_SUCCESS":
+            return {
+                ...state,
+                otpVerified: false, // Réinitialiser après changement du mot de passe
+                isLoading: false,
+                error: null,
+                };
+        
+        case "SEND_OTP_FAILURE":
+        case "VERIFY_OTP_FAILURE":
+        case "RESET_PASSWORD_FAILURE":
+            return {
+                ...state,
+                isLoading: false,
+                error: action.payload,
+                };
+        
         case "LOGIN_SUCCESS":
             return {
                 ...state,

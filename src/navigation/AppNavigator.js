@@ -10,6 +10,7 @@ import SignUpScreen from "../screens/SignUpScreen";
 import SignInScreen from "../screens/SignInScreen";
 import ForgetPasswordScreen from "../screens/forgetPasswordScreen";
 import VerificationScreen from "../screens/VerificationScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen"; 
 import BooksScreen from "../screens/BooksScreen";
 import AddKidsScreen from "../screens/AddKidsScreen";
 import DocumentScreen from "../screens/DocumentScreen";
@@ -61,6 +62,7 @@ const AppNavigator = () => {
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} />
             <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
+            <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
           </>
         ) : (
           <>

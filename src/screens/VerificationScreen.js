@@ -8,16 +8,18 @@ import {
   ImageBackground,
   Keyboard,
   TextInput,
+  Alert,
 } from "react-native";
-import { verifyOTP } from "../api/authService";
+import { useDispatch } from "react-redux";
+import { verifyOtp } from "../reducers/auth/AuthAction";
 
 const VerificationScreen = ({ route, navigation }) => {
+  const dispatch = useDispatch();
   const { phone: mobile = "" } = route.params || {};
-  const [otp, setOtp] = useState(["", "", "", ""]); // Tableau pour stocker les 4 chiffres
-  const inputRefs = useRef([]); // Références pour les champs
+  const [otp, setOtp] = useState(["", "", "", ""]); // Stocker les 4 chiffres du code OTP
+  const inputRefs = useRef([]); // Références pour les champs de saisie
 
   useEffect(() => {
-    // Mettre le focus sur le premier champ au chargement
     inputRefs.current[0]?.focus();
   }, []);
 
@@ -26,12 +28,10 @@ const VerificationScreen = ({ route, navigation }) => {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Passer automatiquement au champ suivant
     if (value && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Fermer le clavier si tous les champs sont remplis
     if (index === 3 && value) {
       Keyboard.dismiss();
     }
@@ -45,33 +45,21 @@ const VerificationScreen = ({ route, navigation }) => {
 
   const handleVerifyOTP = async () => {
     const otpCode = otp.join("");
-  
+
     if (otpCode.length !== 4) {
-      alert("الرجاء إدخال رمز مكون من 4 أرقام");
+      Alert.alert("Erreur", "Veuillez entrer un code OTP valide.");
       return;
     }
-  
+
     try {
-      console.log("Tentative de vérification avec:", mobile, otpCode);
-  
-      // Appel à l'API via authService
-      const response = await verifyOTP(mobile, otpCode);
-      console.log("Réponse brute:", response);
-  
-      if (response) {
-        alert("رمز التحقق صحيح!");
-        console.log("Redirection vers SignIn...");
-        navigation.navigate("SignIn");
-      } else {
-        alert(response?.message || "رمز غير صحيح، حاول مرة أخرى");
-      }
+      await dispatch(verifyOtp(mobile, otpCode));
+
+      // ✅ Rediriger vers ResetPasswordScreen après succès
+      navigation.navigate("ResetPasswordScreen", { phone: mobile });
     } catch (error) {
-      console.error("Erreur de vérification OTP:", error);
-      alert("خطأ في التحقق من الرمز، يرجى المحاولة لاحقًا");
+      Alert.alert("Erreur", "Code OTP invalide, veuillez réessayer.");
     }
   };
-  
-  
 
   return (
     <ImageBackground
@@ -122,6 +110,7 @@ const VerificationScreen = ({ route, navigation }) => {
   );
 };
 
+// Styles cohérents avec les autres écrans
 const styles = StyleSheet.create({
   background: {
     flex: 1,

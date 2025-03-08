@@ -3,30 +3,19 @@ import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ImageBackground, Alert 
 } from 'react-native';
-import { sendOTP } from '../api/authService'; // Importation de la fonction API
+import { useDispatch } from 'react-redux';
+import { sendOtp }from "../reducers/auth/AuthAction";
 
-export default function ResetPasswordScreen({ navigation }) {
+export default function ForgetPasswordScreen({ navigation }) {
+  const dispatch = useDispatch();
   const [phone, setPhone] = useState('');
 
-  // Fonction pour envoyer l'OTP
-  const handleResetPassword = async () => {
+  const handleResetPassword = () => {
     if (!phone.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer un numéro de téléphone valide.');
       return;
     }
-
-    try {
-      const response = await sendOTP(phone);
-      if (response) {
-        Alert.alert('نجاح', 'تم إرسال رمز التحقق');
-        navigation.navigate('VerificationScreen', { phone }); // Redirection avec le numéro
-      } else {
-        Alert.alert('Erreur', response.message || 'Échec de l’envoi de l’OTP.');
-      }
-    } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue. Vérifiez votre connexion.');
-      console.error('Erreur lors de l’envoi OTP:', error);
-    }
+    dispatch(sendOtp(phone, navigation));
   };
 
   return (
@@ -121,6 +110,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 
 // import React, { useState } from 'react';
 // import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
