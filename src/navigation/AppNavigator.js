@@ -13,9 +13,10 @@ import VerificationScreen from "../screens/VerificationScreen";
 import BooksScreen from "../screens/BooksScreen";
 import AddKidsScreen from "../screens/AddKidsScreen";
 import DocumentScreen from "../screens/DocumentScreen";
-import LessonsScreen from "../screens/lessonsScreen";
+import WebinarsScreen from "../screens/WebinarsScreen";
 import LiveSessionScreen from "../screens/LiveSessionScreen";
-import SettingsNavigator from "../navigation/SettingsNavigator"; // ✅ Corrected
+import SettingsNavigator from "../navigation/SettingsNavigator"; 
+import WebinarDetail from "../screens/WebinarDetailScreen";
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
 
@@ -64,12 +65,13 @@ const AppNavigator = () => {
         ) : (
           <>
             {/* If user has children, go to Books. Otherwise, show AddKids */}
-            <Stack.Screen name="Books" component={BooksScreen} options={{ title: "الكتب المدرسية" }} />
+            <Stack.Screen name="Books" component={BooksScreen} options={{ headerShown: false }} />
             <Stack.Screen name="DocumentScreen" component={DocumentScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
             <Stack.Screen name="Settings" component={SettingsNavigator} options={{ headerShown: false }} /> 
-            <Stack.Screen name="Lessons" component={LessonsScreen} options={{ title: " الدروس الإضافيّة " }} />
-            <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ title: " الحصص المباشرة " }} />
+            <Stack.Screen name="Webinars" component={WebinarsScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="WebinarDetail" component={WebinarDetail} options={{ headerShown: false }}/>
+            <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

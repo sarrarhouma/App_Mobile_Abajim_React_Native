@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { 
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert 
+} from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { updateParentInfo, fetchParentInfo } from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,7 +14,6 @@ const ParentInfoScreen = () => {
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
 
   useEffect(() => {
     dispatch(fetchParentInfo());
@@ -32,12 +33,10 @@ const ParentInfoScreen = () => {
     }
 
     const updatedInfo = { full_name: name, mobile };
-    if (password) updatedInfo.password = password;
 
     dispatch(updateParentInfo(updatedInfo, (success) => {
       if (success) {
         Alert.alert("✅ تم تحديث المعلومات بنجاح");
-        setPassword(""); // Clear password field after update
       } else {
         Alert.alert("❌ فشل التحديث، حاول مرة أخرى");
       }
@@ -51,15 +50,18 @@ const ParentInfoScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color="white" />
         </TouchableOpacity>
-        
         <Text style={styles.headerText}>معلوماتي الشخصية</Text>
-        {/* <Ionicons name="person-outline" size={23} color="white" /> */}
       </View>
 
       {/* ✅ Input Fields */}
       <View style={styles.formContainer}>
         <Text style={styles.label}>الاسم</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} textAlign="right" />
+        <TextInput 
+          style={styles.input} 
+          value={name} 
+          onChangeText={setName} 
+          textAlign="right" 
+        />
 
         <Text style={styles.label}>رقم الهاتف</Text>
         <TextInput
@@ -70,17 +72,17 @@ const ParentInfoScreen = () => {
           textAlign="right"
         />
 
-        <Text style={styles.label}>كلمة المرور الجديدة (اختياري)</Text>
-        <TextInput
-          style={styles.input}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          textAlign="right"
-        />
-
+        {/* ✅ Save Changes Button */}
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.buttonText}>حفظ التعديلات</Text>
+        </TouchableOpacity>
+
+        {/* ✅ Redirect to Forget Password Screen */}
+        <TouchableOpacity 
+          style={styles.resetPasswordButton} 
+          onPress={() => navigation.navigate("ForgetPasswordScreen")}
+        >
+          <Text style={styles.buttonText}>إعادة تعيين كلمة المرور</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -140,6 +142,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 15,
   },
+
+  // ✅ Redirect to Forget Password Button
+  resetPasswordButton: {
+    backgroundColor: "#1d3b65",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+
   buttonText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
 });
 

@@ -10,7 +10,7 @@ const BottomNavigation = () => {
       <TouchableOpacity onPress={() => navigation.navigate("Books")}>
         <Image source={require("../../assets/icons/books2.png")} style={styles.navIcon} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("Lessons")}>
+      <TouchableOpacity onPress={() => navigation.navigate("Webinars")}>
         <Image source={require("../../assets/icons/lesson2.png")} style={styles.navIcon} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("LiveSession")}>

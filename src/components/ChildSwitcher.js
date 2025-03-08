@@ -30,7 +30,7 @@ const ChildSwitcher = () => {
             style={styles.parentProfileWrapper}
           >
             <Image 
-              source={require("../../assets/icons/avatar1.png")} 
+              source={require("../../assets/icons/avatar4.png")} 
               style={styles.parentProfile} 
             />
           </TouchableOpacity>

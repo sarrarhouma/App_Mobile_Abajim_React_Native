@@ -81,9 +81,9 @@ const BooksScreen = () => {
         <View style={styles.headerBottom}>
           <Text style={styles.title}>📚 الكتب المدرسية</Text>
           <View style={styles.headerIcons}>
-            <TouchableOpacity>
-              <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
-            </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
+            <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
+          </TouchableOpacity>
             <TouchableOpacity>
               <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
             </TouchableOpacity>
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0097A7",
     paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingVertical: 55,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   bookImage: { width: 160, height: 170, borderRadius: 10 },
 
   bookTitle: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 8,
     color: "#1F3B64",
     fontWeight: "bold",

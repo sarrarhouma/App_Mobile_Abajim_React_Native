@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://661d-196-179-217-81.ngrok-free.app/api'; 
+export const API_URL = 'https://c70a-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
 
 
@@ -149,6 +149,37 @@ export const login = (mobile, password, navigation) => {
     }
   };
 };
+
+// reset password 
+export const resetPassword = (mobile, newPassword, callback) => async (dispatch) => {
+  try {
+    dispatch({ type: "AUTH_LOADING" });
+
+    const response = await fetch(`${API_URL}/users/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mobile, newPassword }),
+    });
+
+    const resData = await response.json();
+
+    if (response.ok) {
+      dispatch({ type: "RESET_PASSWORD_SUCCESS" });
+      Alert.alert("✅ تم إعادة تعيين كلمة المرور بنجاح!");
+      if (callback) callback(true);
+    } else {
+      throw new Error(resData.message || "Échec de la réinitialisation du mot de passe.");
+    }
+  } catch (error) {
+    console.error("❌ Erreur de réinitialisation du mot de passe :", error.message);
+    dispatch({ type: "RESET_PASSWORD_FAILURE", payload: error.message });
+    Alert.alert("❌ فشل إعادة تعيين كلمة المرور، حاول مرة أخرى.");
+    if (callback) callback(false);
+  }
+};
+
   // 🔹 Logout Action
   export const Logout = () => {
     return async (dispatch) => {
@@ -542,5 +573,34 @@ export const fetchParentInfo = () => async (dispatch) => {
   } catch (error) {
     console.error("❌ Error fetching parent info:", error);
     dispatch({ type: "FETCH_PARENT_INFO_FAILURE", payload: error.message });
+  }
+};
+ ////////////////////////////fetching webinars by level_id
+
+ // Action Types
+export const FETCH_WEBINARS_REQUEST = "FETCH_WEBINARS_REQUEST";
+export const FETCH_WEBINARS_SUCCESS = "FETCH_WEBINARS_SUCCESS";
+export const FETCH_WEBINARS_FAILURE = "FETCH_WEBINARS_FAILURE";
+
+// Fetch webinars by level_id
+export const fetchWebinarsByLevel = (levelId) => async (dispatch) => {
+  dispatch({ type: "FETCH_WEBINARS_REQUEST" });
+
+  try {
+      console.log(`📥 Fetching webinars for level_id: ${levelId}`);
+
+      const response = await fetch(`${API_URL}/webinars/level/${levelId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+         // console.log("✅ Webinars fetched successfully:", data);
+          dispatch({ type: "FETCH_WEBINARS_SUCCESS", payload: data || [] });
+      } else {
+          console.error("❌ API Error fetching webinars:", data.error);
+          dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: data.error });
+      }
+  } catch (error) {
+      console.error("❌ Network error fetching webinars:", error);
+      dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: "Failed to fetch webinars" });
   }
 };

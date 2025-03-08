@@ -9,6 +9,7 @@ const initialState = {
     activeChild: null, // ✅ Track selected child
     correctionVideoUrl: null, // ✅ Store correction video URL
     parentInfo: null,
+    webinars: [], // ✅ Added webinars state
 };
 
 const authReducer = (state = initialState, action) => {
@@ -16,6 +17,7 @@ const authReducer = (state = initialState, action) => {
         case "AUTH_LOADING":
         case "DOCUMENT_LOADING":
         case "FETCH_CORRECTION_VIDEO_REQUEST":
+        case "FETCH_WEBINARS_REQUEST": // ✅ Added webinars loading state
             return {
                 ...state,
                 isLoading: true,
@@ -43,6 +45,7 @@ const authReducer = (state = initialState, action) => {
         case "ADD_CHILD_FAIL":
         case "FETCH_CHILDREN_FAILURE":
         case "FETCH_CORRECTION_VIDEO_FAILURE":
+        case "FETCH_WEBINARS_FAILURE": // ✅ Handle webinars fetch failure
             return {
                 ...state,
                 isLoading: false,
@@ -61,6 +64,14 @@ const authReducer = (state = initialState, action) => {
             return {
                 ...state,
                 correctionVideoUrl: action.payload, // ✅ Store the fetched URL
+                isLoading: false,
+                error: null,
+            };
+
+        case "FETCH_WEBINARS_SUCCESS": // ✅ Handle webinars success
+            return {
+                ...state,
+                webinars: action.payload, // ✅ Store fetched webinars
                 isLoading: false,
                 error: null,
             };
@@ -87,51 +98,53 @@ const authReducer = (state = initialState, action) => {
                 activeChild: action.payload.child, // ✅ Update active child
                 authToken: action.payload.token, // ✅ Update token
                 children: action.payload.children || state.children, // ✅ Ensure children persist
-                }; 
+            }; 
+
         case "UPDATE_CHILD_REQUEST":
             return {
                 ...state,
-                  isLoading: true,
-                  error: null,
-                };
+                isLoading: true,
+                error: null,
+            };
               
         case "UPDATE_CHILD_SUCCESS":
             return {
                 ...state,
-                  children: state.children.map((child) =>
+                children: state.children.map((child) =>
                     child.id === action.payload.id ? action.payload : child
-                  ),
-                  isLoading: false,
-                  error: null,
-                };
+                ),
+                isLoading: false,
+                error: null,
+            };
               
         case "UPDATE_CHILD_FAILURE":
             return {
-                  ...state,
-                  isLoading: false,
-                  error: action.payload,
-                };
+                ...state,
+                isLoading: false,
+                error: action.payload,
+            };
+
         case "FETCH_PARENT_INFO_REQUEST":
             return {
                 ...state,
                 isLoading: true,
                 error: null,
-                };
-    
+            };
+
         case "FETCH_PARENT_INFO_SUCCESS":
             return {
                 ...state,
                 parentInfo: action.payload, // ✅ Save fetched parent data
                 isLoading: false,
                 error: null,
-                };
-    
+            };
+
         case "FETCH_PARENT_INFO_FAILURE":
             return {
                 ...state,
                 isLoading: false,
                 error: action.payload,
-                }; 
+            }; 
 
         default:
             return state;
@@ -139,4 +152,3 @@ const authReducer = (state = initialState, action) => {
 };
 
 export default authReducer;
-

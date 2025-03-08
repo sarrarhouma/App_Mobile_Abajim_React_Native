@@ -1,5 +1,5 @@
 // URL de ton API (use your local IP when testing on a device or emulator)
-const API_URL = 'https://661d-196-179-217-81.ngrok-free.app/api/users';
+const API_URL = 'https://c70a-196-179-217-114.ngrok-free.app/api/users';
 console.log("API_URL utilisé:", API_URL);
 // Function to register a new user
 export const register = async (fullName, mobile, password) => {
