@@ -29,6 +29,7 @@ export default function SignUpScreen({ navigation }) {
   return (
     <ImageBackground source={require("../../assets/images/ba1.png")} style={styles.background}>
       <Image source={require("../../assets/images/logocolors.png")} style={styles.logo} />
+      <Text style={styles.title}> إبدأ رحلة تعلمية إستثنائية مع أبجيم 🚀 </Text>
       <Text style={styles.title}>إنشاء حساب جديد</Text>
 
       {/* ✅ Affichage des erreurs Redux */}
@@ -73,7 +74,7 @@ export default function SignUpScreen({ navigation }) {
 const styles = StyleSheet.create({
   background: { flex: 1, width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
   logo: { width: 200, height: 70, marginBottom: 20 },
-  title: { fontSize: 22, color: "#1F3B64", fontWeight: "bold", marginBottom: 20 },
+  title: { fontSize: 21, color: "#1F3B64", fontWeight: "bold", marginBottom: 20 },
   input: { width: "90%", height: 50, borderWidth: 1, borderColor: "#ddd", borderRadius: 25, paddingHorizontal: 15, marginBottom: 15, textAlign: "right", backgroundColor: "rgba(255, 255, 255, 0.9)" },
   buttonPrimary: { width: "90%", height: 50, backgroundColor: "#17A2B8", justifyContent: "center", alignItems: "center", borderRadius: 25, marginBottom: 20 },
   buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },

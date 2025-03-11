@@ -14,37 +14,25 @@ import { fetchWebinarsByLevel } from "../reducers/auth/AuthAction";
 import { Video } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 
+
 const WebinarDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
   const { webinarId } = route.params || {};
-  const { webinars, isLoading } = useSelector((state) => state.auth);
+  const { webinars, isLoading, activeChild } = useSelector((state) => state.auth);
+
+  const [expandedChapter, setExpandedChapter] = useState(null);
+  const [activeTab, setActiveTab] = useState("content");
 
   const webinar = webinars.find((w) => w.id === webinarId) || null;
 
   useEffect(() => {
-    if (!webinar && !isLoading) {
-      dispatch(fetchWebinarsByLevel(activeChild?.level_id));
+    if (!webinar && activeChild?.level_id && !isLoading) {
+      dispatch(fetchWebinarsByLevel(activeChild.level_id));
     }
-  }, [dispatch, webinar, webinarId]);
-
-//   const videoUrl = webinar.video_demo 
-//   ? `https://www.abajim.com${webinar.video_demo.startsWith("/") ? webinar.video_demo : "/" + webinar.video_demo}.mp4`
-//   : null;
-console.log("🎥 Vérifie si cette URL fonctionne dans le navigateur :", videoUrl);
- const videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4"; // url de test
-
-  const chapters = [
-    { id: 1, title: `📘 المحور الأول : ${webinar?.slug || "عنوان غير متوفر"}`, videos: [videoUrl] },
-    { id: 2, title: "📗 المحور الثاني : ", videos: [] },
-  ];
-  const documents = [{ id: 1, title: "📄 وثيقة ١" }, { id: 2, title: "📄 وثيقة ٢" }];
-  const quizzes = [{ id: 1, title: "🎮 اختبار ١" }, { id: 2, title: "🎮 اختبار ٢" }];
-
-  const [expandedChapter, setExpandedChapter] = useState(chapters[0].id);
-  const [activeTab, setActiveTab] = useState("content");
+  }, [dispatch, webinar, activeChild, isLoading]);
 
   if (!webinar) {
     return (
@@ -54,6 +42,8 @@ console.log("🎥 Vérifie si cette URL fonctionne dans le navigateur :", videoU
       </View>
     );
   }
+
+  const chapters = webinar.chapters || [];
 
   return (
     <View style={styles.container}>
@@ -77,7 +67,7 @@ console.log("🎥 Vérifie si cette URL fonctionne dans le navigateur :", videoU
           style={[styles.tab, activeTab === "quiz" && styles.activeTab]}
           onPress={() => setActiveTab("quiz")}
         >
-          <Text style={styles.tabText}>🎮 التحدي</Text>
+          <Text style={styles.tabText}>🎮 تحدي مرح</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "documents" && styles.activeTab]}
@@ -93,79 +83,94 @@ console.log("🎥 Vérifie si cette URL fonctionne dans le navigateur :", videoU
         </TouchableOpacity>
       </View>
 
-      {/* ✅ Espacement ajouté */}
-      <View style={styles.sectionSpacing} />
-
-      {/* ✅ Contenu */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {activeTab === "content" && (
-          <>
-            {chapters.map((chapter) => (
-              <View key={chapter.id} style={styles.chapterContainer}>
-                {/* 📌 Titre du chapitre */}
-                <TouchableOpacity
-                  style={styles.chapterHeader}
-                  onPress={() =>
-                    setExpandedChapter(expandedChapter === chapter.id ? null : chapter.id)
-                  }
-                >
-                  <Ionicons
-                    name={expandedChapter === chapter.id ? "chevron-up" : "chevron-down"}
-                    size={20}
-                    color="#1F3B64"
-                  />
-                  <Text style={styles.chapterTitle}>{chapter.title}</Text>
-                </TouchableOpacity>
+      {activeTab === "content" && (
+  <>
+    {chapters.length === 0 ? (
+      <View style={styles.emptyState}>
+        <Image
+          source={require("../../assets/icons/no_content.png")}
+          style={styles.emptyImage}
+        />
+        <Text style={styles.noVideoText}>🚫 لا يوجد محتوى متاح حاليا</Text>
+      </View>
+    ) : (
+      chapters.map((chapter) => (
+        <View key={chapter.id} style={styles.chapterContainer}>
+          <TouchableOpacity
+            style={styles.chapterHeader}
+            onPress={() =>
+              setExpandedChapter(expandedChapter === chapter.id ? null : chapter.id)
+            }
+          >
+            <Ionicons
+              name={expandedChapter === chapter.id ? "chevron-up" : "chevron-down"}
+              size={20}
+              color="#1F3B64"
+            />
+            <Text style={styles.chapterTitle}>
+              📘 {chapter?.files?.[0]?.translations?.[0]?.title || "فصل بدون عنوان"}
+            </Text>
+          </TouchableOpacity>
 
-                {/* 🎥 Vidéos */}
-                {expandedChapter === chapter.id && (
-                  <View style={styles.videoContainer}>
-                    {chapter.videos.length > 0 ? (
-                      chapter.videos.map((video, index) => (
-                        <Video
-                          key={index}
-                          source={{ uri: video }}
-                          style={styles.videoPlayer}
-                          useNativeControls
-                          resizeMode="contain"
-                          onError={(error) => console.error("❌ Erreur vidéo:", error)}
-                        />
-                      ))
-                    ) : (
-                      <Text style={styles.noVideoText}>❌ لا يوجد فيديوهات لهذا الفصل</Text>
-                    )}
-                  </View>
-                )}
-              </View>
-            ))}
-          </>
-        )}
+          {expandedChapter === chapter.id && (
+            <View style={styles.videoContainer}>
+              {chapter.files?.filter(file => file.file_type === "video").length > 0 ? (
+                chapter.files
+                  .filter(file => file.file_type === "video")
+                  .map((file, index) => (
+                    <View key={index} style={{ marginBottom: 20 }}>
+                      <Video
+                        source={{ uri: file.file }}
+                        style={styles.videoPlayer}
+                        useNativeControls
+                        resizeMode="contain"
+                        onError={(e) => console.error("❌ Video error", e)}
+                      />
+                    </View>
+                  ))
+              ) : (
+                <Text style={styles.noVideoText}>❌ لا يوجد فيديوهات لهذا الفصل</Text>
+              )}
+            </View>
+          )}
+        </View>
+      ))
+    )}
+  </>
+)}
 
-        {/* 📄 Documents Section avec même design */}
-        {activeTab === "documents" && (
-          <View style={styles.contentBox}>
-            {documents.length > 0 ? (
-              documents.map((doc) => (
-                <Text key={doc.id} style={styles.documentText}>{doc.title}</Text>
-              ))
-            ) : (
-              <Text style={styles.noVideoText}>❌ لا توجد وثائق متاحة</Text>
-            )}
-          </View>
-        )}
 
-        {/* 🎮 Quiz Section avec même design */}
-        {activeTab === "quiz" && (
-          <View style={styles.contentBox}>
-            {quizzes.length > 0 ? (
-              quizzes.map((quiz) => (
-                <Text key={quiz.id} style={styles.quizText}>{quiz.title}</Text>
-              ))
-            ) : (
-              <Text style={styles.noVideoText}>🚀 لا يوجد تحديات متاحة بعد</Text>
-            )}
-          </View>
-        )}
+{activeTab === "documents" && (
+  <View style={styles.contentBox}>
+    {chapters.flatMap(ch => ch.files || []).filter(f => f.file_type === "document").length > 0 ? (
+      chapters
+        .flatMap(ch => ch.files || [])
+        .filter(file => file.file_type === "document")
+        .map((file, idx) => (
+          <Text key={idx} style={styles.documentText}>
+            📄 {file?.translations?.[0]?.title || "وثيقة بدون عنوان"}
+          </Text>
+        ))
+    ) : (
+      <>
+        <Image source={require("../../assets/icons/no_files2.png")} style={styles.emptyIllustration} />
+        <Text style={styles.noVideoText}>❌ لا توجد وثائق متاحة</Text>
+      </>
+    )}
+  </View>
+)}
+
+
+{activeTab === "quiz" && (
+  <View style={styles.contentBox}>
+    <>
+      <Image source={require("../../assets/icons/no_quizz.png")} style={styles.emptyIllustration} />
+      <Text style={styles.noVideoText}>🚀 لا يوجد تحديات متاحة بعد</Text>
+    </>
+  </View>
+)}
+
       </ScrollView>
     </View>
   );
@@ -176,27 +181,65 @@ const styles = StyleSheet.create({
 
   headerContainer: { position: "relative" },
   headerImage: { width: "100%", height: 280, resizeMode: "cover" },
-  backButton: { position: "absolute", top: 45, left: 15 , backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 5, borderRadius: 5},
-  overlayTitle: { position: "absolute", top: 45, right: 15, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 8, borderRadius: 5 },
+  backButton: {
+    position: "absolute", top: 45, left: 15,
+    backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 5, borderRadius: 5
+  },
+  overlayTitle: {
+    position: "absolute", top: 45, right: 15,
+    backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 8, borderRadius: 5
+  },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "white", textAlign: "right" },
 
-  tabsContainer: { flexDirection: "row", justifyContent: "space-around", backgroundColor: "#0097A7", paddingVertical: 10 },
+  tabsContainer: {
+    flexDirection: "row", justifyContent: "space-around",
+    backgroundColor: "#0097A7", paddingVertical: 10
+  },
   tab: { paddingVertical: 10, paddingHorizontal: 20 },
   activeTab: { borderBottomWidth: 3, borderBottomColor: "white" },
   tabText: { color: "white", fontSize: 16, fontWeight: "bold" },
 
   sectionSpacing: { height: 20 },
+  scrollContent: { paddingVertical: 20 },
 
-  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 15, },
-  chapterHeader: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#E0E0E0", padding: 15, borderRadius: 10 },
-  chapterTitle: { fontSize: 18, fontWeight: "bold", color: "#1F3B64", textAlign: "center", flex: 1 },
+  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 15 },
+  chapterHeader: {
+    flexDirection: "row", justifyContent: "space-between",
+    backgroundColor: "#E0E0E0", padding: 15, borderRadius: 10
+  },
+  chapterTitle: {
+    fontSize: 18, fontWeight: "bold", color: "#1F3B64",
+    textAlign: "center", flex: 1
+  },
 
-  videoContainer: { alignItems: "center", width: "100%",  marginTop: 15,  alignSelf: "center", width: "100%" },
-  videoPlayer: { width: "100%", height: 220, borderRadius: 10, },
+  videoContainer: { marginTop: 15 },
+  videoPlayer: { width: "100%", height: 220, borderRadius: 10 },
 
-  contentBox: { width: "90%", alignSelf: "center", backgroundColor: "#FFF", padding: 15, borderRadius: 10, elevation: 5, marginBottom: 15 },
+  contentBox: {
+    width: "90%", alignSelf: "center", backgroundColor: "#FFF",
+    padding: 15, borderRadius: 10, elevation: 5, marginBottom: 15
+  },
   documentText: { fontSize: 16, color: "#333", textAlign: "right" },
   quizText: { fontSize: 16, color: "#333", textAlign: "right" },
+  noVideoText: { textAlign: "center", color: "#888", marginTop: 10 },
+  emptyIllustration: {
+    width: 200,
+    height: 200,
+    alignSelf: "center",
+    marginBottom: 10,
+    resizeMode: "contain"
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  emptyImage: {
+    width: 220,
+    height: 200,
+    marginBottom: 15,
+  },
+   
 });
 
 export default WebinarDetailScreen;

@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Logout, fetchWebinarsByLevel } from "../reducers/auth/AuthAction";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
-import ChildSwitcher from "../components/ChildSwitcher"; 
+import ChildSwitcher from "../components/ChildSwitcher";
 
 const WebinarsScreen = () => {
   const navigation = useNavigation();
@@ -48,36 +48,34 @@ const WebinarsScreen = () => {
         <View style={styles.headerBottom}>
           <Text style={styles.title}>📚 الدروس الإضافية</Text>
           <View style={styles.headerIcons}>
-           <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-                      <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
-                    </TouchableOpacity>
-                       <TouchableOpacity>
-                         <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-                       </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
+              <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* 🔍 Barre de recherche */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
           placeholder="🔎 ابحث عن درس..."
           value={searchText}
           onChangeText={setSearchText}
-          textAlign="right" // ✅ Supporte l'alignement RTL
+          textAlign="right"
         />
         <TouchableOpacity style={styles.searchButton}>
           <Ionicons name="search" size={22} color="white" />
         </TouchableOpacity>
       </View>
 
-      {/* 📌 Liste des Webinars */}
       {loading ? (
         <ActivityIndicator size="large" color="#0097A7" style={styles.loading} />
-      ) : (Array.isArray(webinars) && webinars.length > 0) ? ( 
+      ) : Array.isArray(webinars) && webinars.length > 0 ? (
         <FlatList
-          data={webinars}
+          data={webinars.filter((item) => item.slug?.includes(searchText))}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity 
@@ -86,7 +84,6 @@ const WebinarsScreen = () => {
               onPress={() => navigation.navigate("WebinarDetail", { webinarId: item.id })}
             >
               <View style={styles.webinarCard}>
-                {/* Image (à droite en RTL) */}
                 <Image 
                   source={{ uri: `https://www.abajim.com/${item.image_cover}` }} 
                   style={styles.webinarImage}
@@ -147,7 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#FFF",
-    textAlign: "right", // ✅ Alignement RTL
+    textAlign: "right",
   },
 
   headerIcons: {
@@ -160,7 +157,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   searchContainer: {
-    flexDirection: "row-reverse", // ✅ RTL (input à droite, icône à gauche)
+    flexDirection: "row-reverse",
     alignItems: "center",
     backgroundColor: "#FFF",
     borderRadius: 25,
@@ -174,8 +171,8 @@ const styles = StyleSheet.create({
   searchButton: {
     backgroundColor: "#1F3B64",
     padding: 11,
-    borderTopLeftRadius: 25, // ✅ Coin gauche arrondi (RTL)
-    borderBottomLeftRadius: 25, // ✅ Coin gauche arrondi (RTL)
+    borderTopLeftRadius: 25,
+    borderBottomLeftRadius: 25,
   },
 
   webinarsList: {
@@ -206,7 +203,7 @@ const styles = StyleSheet.create({
 
   webinarTitle: { fontSize: 16, fontWeight: "bold", color: "#1F3B64", textAlign: "right" },
 
-  infoContainer: { flexDirection: "row-reverse", alignItems: "center", marginTop: 5 }, // ✅ RTL
+  infoContainer: { flexDirection: "row-reverse", alignItems: "center", marginTop: 5 },
 
   detailText: { fontSize: 14, marginRight: 5, color: "#555", textAlign: "right" },
 

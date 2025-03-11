@@ -58,11 +58,11 @@ const AppNavigator = () => {
           <>
             {/* User NOT logged in */}
             <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="SignUp" component={SignUpScreen} />
-            <Stack.Screen name="SignIn" component={SignInScreen} />
-            <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} />
-            <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
-            <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="VerificationScreen" component={VerificationScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} options={{ headerShown: false }}/>
           </>
         ) : (
           <>

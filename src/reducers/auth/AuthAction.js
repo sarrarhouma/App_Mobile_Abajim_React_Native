@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://c70a-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://cc53-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
 
 
@@ -207,7 +207,7 @@ export const verifyOtp = (mobile, otp, navigation) => async (dispatch) => {
 
     dispatch({ type: VERIFY_OTP_SUCCESS });
     Alert.alert("Succès", "OTP validé avec succès.");
-    navigation.navigate("NewPasswordScreen", { phone: mobile });
+    navigation.navigate("ResetPasswordScreen", { phone: mobile });
   } catch (error) {
     dispatch({ type: VERIFY_OTP_FAILURE, payload: error.message });
     Alert.alert("Erreur", error.message);
