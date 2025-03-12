@@ -69,11 +69,6 @@ export const verifyOTP = async (mobile, otp) => {
     throw new Error("Error verifying OTP: " + error.message);
   }
 };
-
-
-
-
-
 // Function to reset the password
 export const resetPassword = async (mobile, newPassword) => {
   try {

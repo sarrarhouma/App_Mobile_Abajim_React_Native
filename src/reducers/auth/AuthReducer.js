@@ -6,11 +6,15 @@ const initialState = {
     children: [],
     userHasKids: false,  
     documentData: null, 
-    activeChild: null, // ✅ Track selected child
-    correctionVideoUrl: null, // ✅ Store correction video URL
+    activeChild: null, 
+    correctionVideoUrl: null, 
     parentInfo: null,
-    webinars: [], // ✅ Added webinars state
+    webinars: [], 
     otpVerified: false,
+    teacherProfile: null,
+    isFollowing: false,
+    followersCount: 0,
+
 };
 
 const authReducer = (state = initialState, action) => {
@@ -186,7 +190,39 @@ const authReducer = (state = initialState, action) => {
                 isLoading: false,
                 error: action.payload,
             }; 
-
+        case "FETCH_TEACHER_REQUEST":
+            return {
+                ...state,
+                isLoading: true,
+                error: null,
+            };
+              
+        case "FETCH_TEACHER_SUCCESS":
+            return {
+                ...state,
+                isLoading: false,
+                teacherProfile: action.payload,
+                error: null,
+            };
+              
+        case "FETCH_TEACHER_FAILURE":
+            return {
+                ...state,
+                isLoading: false,
+                error: action.payload,
+            };
+        case "SET_IS_FOLLOWING":
+            return {
+                ...state,
+                isFollowing: action.payload,
+            };
+              
+        case "SET_FOLLOWERS_COUNT":
+            return {
+                ...state,
+                followersCount: action.payload,
+            };
+              
         default:
             return state;
     }

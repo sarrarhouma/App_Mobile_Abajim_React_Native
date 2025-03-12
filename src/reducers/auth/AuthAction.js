@@ -518,7 +518,7 @@ export const switchChild = (child) => {
       }
 
       //console.log("✅ Child switched successfully:", resData);
-
+      await AsyncStorage.setItem("activeChildId", child.id.toString());
       // ✅ Save the new token and active child
       await AsyncStorage.setItem("tokenChild", resData.token);
       await AsyncStorage.setItem("activeChild", JSON.stringify(resData.child));
@@ -665,5 +665,94 @@ export const fetchWebinarsByLevel = (levelId) => async (dispatch) => {
   } catch (error) {
       console.error("❌ Network error fetching webinars:", error);
       dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: "Failed to fetch webinars" });
+  }
+};
+// fetching teacher informations
+// fetching teacher informations
+export const FETCH_TEACHER_REQUEST = "FETCH_TEACHER_REQUEST";
+export const FETCH_TEACHER_SUCCESS = "FETCH_TEACHER_SUCCESS";
+export const FETCH_TEACHER_FAILURE = "FETCH_TEACHER_FAILURE";
+export const SET_IS_FOLLOWING = "SET_IS_FOLLOWING";
+export const SET_FOLLOWERS_COUNT = "SET_FOLLOWERS_COUNT";
+
+// Fetch teacher profile and follow info
+export const fetchTeacherById = (id) => async (dispatch) => {
+  dispatch({ type: FETCH_TEACHER_REQUEST });
+
+  try {
+    const response = await fetch(`${API_URL}/teachers/${id}`);
+    const text = await response.text();
+   // console.log("🔎 API Raw Response:", text);
+
+    const data = JSON.parse(text);
+
+    if (!response.ok) throw new Error(data.error || "Failed to fetch teacher");
+
+    dispatch({ type: FETCH_TEACHER_SUCCESS, payload: data });
+
+    const followerId = await AsyncStorage.getItem("activeChildId");
+
+    const [followingRes, countRes] = await Promise.all([
+      fetch(`${API_URL}/follows/is-following/${followerId}/${id}`),
+      fetch(`${API_URL}/follows/count/${id}`)
+    ]);
+
+    const followingData = await followingRes.json();
+    const countData = await countRes.json();
+
+    dispatch({ type: SET_IS_FOLLOWING, payload: followingData.isFollowing });
+    dispatch({ type: SET_FOLLOWERS_COUNT, payload: countData.followers });
+
+  } catch (error) {
+    console.error("❌ Error fetching teacher:", error.message);
+    dispatch({ type: FETCH_TEACHER_FAILURE, payload: error.message });
+  }
+};
+
+// Toggle follow/unfollow status
+export const toggleFollow = (teacherId) => async (dispatch) => {
+  try {
+    const follower = await AsyncStorage.getItem("activeChildId");
+
+    if (!follower) {
+      console.warn("⚠️ Aucun enfant sélectionné");
+      return;
+    }
+
+    console.log("📌 Follower ID:", follower, "| Teacher ID:", teacherId);
+
+    const isFollowingRes = await fetch(`${API_URL}/follows/is-following/${follower}/${teacherId}`);
+    const { isFollowing } = await isFollowingRes.json();
+
+    const url = `${API_URL}/follows/${isFollowing ? "unsubscribe" : "subscribe"}`;
+    const method = isFollowing ? "DELETE" : "POST";
+
+    const followRes = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ follower, user_id: teacherId }),
+    });
+
+    const followData = await followRes.json();
+    console.log("✅ Follow/Unfollow API response:", followData);
+
+    if (!followRes.ok) {
+      console.warn("❌ Erreur lors du follow/unfollow :", followData?.error || "Erreur inconnue");
+      return;
+    }
+
+    dispatch({ type: SET_IS_FOLLOWING, payload: !isFollowing });
+
+    // Update followers count
+    const countRes = await fetch(`${API_URL}/follows/count/${teacherId}`);
+    if (countRes.ok) {
+      const countData = await countRes.json();
+      dispatch({ type: SET_FOLLOWERS_COUNT, payload: countData.followers });
+    } else {
+      console.warn("⚠️ Failed to fetch updated followers count");
+    }
+
+  } catch (error) {
+    console.error("❌ Follow/unfollow error:", error);
   }
 };

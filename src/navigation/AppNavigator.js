@@ -18,6 +18,7 @@ import WebinarsScreen from "../screens/WebinarsScreen";
 import LiveSessionScreen from "../screens/LiveSessionScreen";
 import SettingsNavigator from "../navigation/SettingsNavigator"; 
 import WebinarDetail from "../screens/WebinarDetailScreen";
+import TeacherScreen from "../screens/TeacherScreen";
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
 
@@ -74,6 +75,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Webinars" component={WebinarsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="WebinarDetail" component={WebinarDetail} options={{ headerShown: false }}/>
             <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Teacher" component={TeacherScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

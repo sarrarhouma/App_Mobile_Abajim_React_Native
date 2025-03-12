@@ -91,9 +91,14 @@ const WebinarsScreen = () => {
                 <View style={styles.webinarDetails}>
                   <Text style={styles.webinarTitle}>{item.slug}</Text> 
                   <View style={styles.infoContainer}>
-                    <MaterialIcons name="person" size={18} color="#0097A7" />
-                    <Text style={styles.detailText}>{item.teacher?.full_name || "غير متوفر"}</Text>
-                  </View>
+                <MaterialIcons name="person" size={18} color="#0097A7" />
+                <TouchableOpacity onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}>
+                  <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
+                    {item.teacher?.full_name || "غير متوفر"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
                   <View style={styles.infoContainer}>
                     <Ionicons name="time-outline" size={18} color="#0097A7" />
                     <Text style={styles.detailText}>{item.duration ? `${item.duration} دقيقة` : "غير متوفر"}</Text>
