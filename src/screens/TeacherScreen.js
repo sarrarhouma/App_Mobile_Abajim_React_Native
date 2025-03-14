@@ -14,6 +14,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTeacherById, toggleFollow } from "../reducers/auth/AuthAction";
 
+const getInitials = (fullName) => {
+  if (!fullName) return "؟";
+  const names = fullName.trim().split(" ");
+  return names.length >= 2
+    ? (names[0][0] + names[1][0]).toUpperCase()
+    : names[0].slice(0, 2).toUpperCase();
+};
+
 const TeacherScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -39,7 +47,7 @@ const TeacherScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header with background image */}
+      {/* 🎯 En-tête avec image de couverture */}
       <View style={styles.coverContainer}>
         {teacher.cover_img && (
           <Image
@@ -53,36 +61,43 @@ const TeacherScreen = () => {
         <Text style={styles.headerText}>👨‍🏫 الملف الشخصي للمعلم</Text>
       </View>
 
-      {/* Avatar & Info */}
+      {/* 📌 Avatar & informations */}
       <View style={styles.profileContainer}>
-        <Image
-          source={{ uri: `https://www.abajim.com/${teacher.avatar}` }}
-          style={styles.avatar}
-        />
+        {teacher.avatar ? (
+          <Image
+            source={{ uri: `https://www.abajim.com/${teacher.avatar}` }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={styles.initialsCircle}>
+            <Text style={styles.initialsText}>{getInitials(teacher.full_name)}</Text>
+          </View>
+        )}
 
-        {/* Follow & Count aligned */}
+        {/* 💡 Ligne: bouton suivi + nombre de followers */}
         <View style={styles.followRow}>
           <TouchableOpacity
             onPress={() => dispatch(toggleFollow(teacher.id))}
             style={[styles.followButton, isFollowing ? styles.unfollow : styles.follow]}
           >
             <Text style={styles.followButtonText}>
-              {isFollowing ? " إلغاء المتابعة" : "➕ متابعة"}
+              {isFollowing ? "إلغاء المتابعة" : "➕ متابعة"}
             </Text>
           </TouchableOpacity>
+
           <View style={styles.followerBox}>
             <Ionicons name="people" size={18} color="#0097A7" />
             <Text style={styles.followerText}>{followersCount} متابع</Text>
           </View>
         </View>
 
-        {/* Name & bio */}
+        {/* 👤 Nom & Bio */}
         <Text style={styles.name}>{teacher.full_name}</Text>
         <Text style={styles.bio}>{teacher.bio}</Text>
         <Text style={styles.about}>{teacher.about}</Text>
       </View>
 
-      {/* Webinars list */}
+      {/* 🎬 Liste des webinaires */}
       <Text style={styles.sectionTitle}>📺 الدروس الإضافية المنشورة</Text>
       <FlatList
         data={teacher.videos}
@@ -143,6 +158,21 @@ const styles = StyleSheet.create({
     marginTop: -50,
     zIndex: 3,
   },
+  initialsCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#0097A7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -50,
+    zIndex: 3,
+  },
+  initialsText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 32,
+  },
 
   followRow: {
     flexDirection: "row",
@@ -152,9 +182,15 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   followButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
     borderRadius: 25,
+    backgroundColor: "#0097A7",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   follow: {
     backgroundColor: "#0097A7",
@@ -165,18 +201,31 @@ const styles = StyleSheet.create({
   followButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 15,
   },
 
   followerBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    paddingVertical: 9.5,
+    borderRadius: 25,
+    backgroundColor: "#fff",
+    borderWidth: 1.2,
+    borderColor: "#0097A7",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   followerText: {
-    fontSize: 14,
+    marginLeft: 8,
+    fontSize: 15,
+    fontWeight: "600",
     color: "#1F3B64",
-  },
+  },  
 
   name: {
     fontSize: 20,

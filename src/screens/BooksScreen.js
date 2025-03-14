@@ -79,10 +79,10 @@ const BooksScreen = () => {
         <ChildSwitcher /> {/* ✅ New Component for Parent & Children Profiles */}
         {/* 🔹 Title & Icons */}
         <View style={styles.headerBottom}>
-          <Text style={styles.title}>📚 الكتب المدرسية</Text>
+          <Text style={styles.title}> الكتب المدرسية</Text>
           <View style={styles.headerIcons}>
           <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-            <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
+            <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
           </TouchableOpacity>
             <TouchableOpacity>
               <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
@@ -158,13 +158,13 @@ const styles = StyleSheet.create({
   },
 
   booksList: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
 
   bookContainer: {
     flex: 1,
-    marginVertical: 15,
+    marginVertical: 12,
     marginHorizontal: 10,
     alignItems: "center",
   },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   bookCard: {
     backgroundColor: "#FFF",
     borderRadius: 15,
-    padding: 35,
+    padding: 30,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -180,15 +180,16 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
     width: 190,
+    height: 280,
   },
 
-  bookImage: { width: 160, height: 170, borderRadius: 10 },
+  bookImage: { width: 170, height: 230, borderRadius: 10 },
 
   bookTitle: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 8,
     color: "#1F3B64",
-    fontWeight: "bold",
+    fontWeight: "900",
     textAlign: "center",
   },
 

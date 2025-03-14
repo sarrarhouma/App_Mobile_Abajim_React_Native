@@ -63,12 +63,13 @@ const ChildSwitcher = () => {
 
           {/* ✅ Enfants */}
           <View>
-            <FlatList
+          <FlatList
               data={children}
               horizontal
               keyExtractor={(item) => item.id.toString()}
               showsHorizontalScrollIndicator={false}
               extraData={activeChild}
+              contentContainerStyle={{ alignItems: "center" }} // ✅ les enfants sur la même ligne que le parent
               renderItem={({ item }) => {
                 const avatarUrl = item.avatar && item.avatar.startsWith("http")
                   ? item.avatar
@@ -92,10 +93,8 @@ const ChildSwitcher = () => {
               }}
             />
 
-            {/* ✅ Message de bienvenue */}
-            <Text style={styles.welcomeText}>
-               مرحباً صغيري {activeChild?.full_name} 👋
-            </Text>
+
+            
           </View>
         </View>
       </View>
@@ -162,16 +161,21 @@ const styles = StyleSheet.create({
   childProfileWrapper: {
     position: "relative",
     marginLeft: 10,
+    alignItems: "center", // ✅ aligne le point et l'image verticalement
+    justifyContent: "center", // ✅ ajoute si nécessaire pour centrer
+    width: 50, // ✅ largeur fixe pour que le dot soit toujours au bon endroit
   },
+  
   childProfile: {
     width: 45,
     height: 45,
     borderRadius: 25,
   },
+  
   activeDot: {
     position: "absolute",
     bottom: 0,
-    right: 0,
+    left: 35, // ✅ positionné à droite bas (car image = 45px)
     width: 12,
     height: 12,
     backgroundColor: "green",
@@ -179,19 +183,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FFF",
   },
+  
   activeChildBorder: {
     borderWidth: 2,
     borderColor: "#0097A7",
     borderRadius: 30,
     padding: 2,
   },
-  welcomeText: {
-    marginTop: 8,
-    fontSize: 16,
-    color: "#1F3B64",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
+  // welcomeText: {
+  //   marginTop: 8,
+  //   fontSize: 16,
+  //   color: "#1F3B64",
+  //   textAlign: "center",
+  //   fontWeight: "bold",
+  // },
 });
 
 export default ChildSwitcher;

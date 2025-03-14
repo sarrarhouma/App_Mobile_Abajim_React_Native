@@ -12,9 +12,18 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import { Logout, fetchWebinarsByLevel } from "../reducers/auth/AuthAction";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import ChildSwitcher from "../components/ChildSwitcher";
+
+// ✅ Fonction utilitaire pour extraire les initiales du nom complet
+const getInitials = (fullName) => {
+  if (!fullName) return "؟";
+  const names = fullName.trim().split(" ");
+  return names.length >= 2
+    ? (names[0][0] + names[1][0]).toUpperCase()
+    : names[0].slice(0, 2).toUpperCase();
+};
 
 const WebinarsScreen = () => {
   const navigation = useNavigation();
@@ -46,10 +55,10 @@ const WebinarsScreen = () => {
       <View style={styles.header}>
         <ChildSwitcher />
         <View style={styles.headerBottom}>
-          <Text style={styles.title}>📚 الدروس الإضافية</Text>
+          <Text style={styles.title}> الدروس الإضافية</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-              <Image source={require("../../assets/icons/bell.png")} style={styles.icon} />
+              <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
             </TouchableOpacity>
             <TouchableOpacity>
               <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
@@ -78,35 +87,53 @@ const WebinarsScreen = () => {
           data={webinars.filter((item) => item.slug?.includes(searchText))}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.webinarContainer} 
+            <TouchableOpacity
+              style={styles.webinarContainer}
               activeOpacity={0.8}
               onPress={() => navigation.navigate("WebinarDetail", { webinarId: item.id })}
             >
               <View style={styles.webinarCard}>
-                <Image 
-                  source={{ uri: `https://www.abajim.com/${item.image_cover}` }} 
+                <Image
+                  source={{ uri: `https://www.abajim.com/${item.image_cover}` }}
                   style={styles.webinarImage}
                 />
                 <View style={styles.webinarDetails}>
-                  <Text style={styles.webinarTitle}>{item.slug}</Text> 
+                  <Text style={styles.webinarTitle}>{item.slug}</Text>
+
+                  {/* ✅ Avatar ou Initiales du professeur */}
                   <View style={styles.infoContainer}>
-                <MaterialIcons name="person" size={18} color="#0097A7" />
-                <TouchableOpacity onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}>
-                  <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
-                    {item.teacher?.full_name || "غير متوفر"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                    {item.teacher?.avatar ? (
+                      <Image
+                        source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
+                        style={styles.teacherAvatar}
+                      />
+                    ) : (
+                      <View style={styles.initialsCircle}>
+                        <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
+                    >
+                      <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
+                        {item.teacher?.full_name || "غير متوفر"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
 
                   <View style={styles.infoContainer}>
                     <Ionicons name="time-outline" size={18} color="#0097A7" />
-                    <Text style={styles.detailText}>{item.duration ? `${item.duration} دقيقة` : "غير متوفر"}</Text>
+                    <Text style={styles.detailText}>
+                      {item.duration ? `${item.duration} دقيقة` : "غير متوفر"}
+                    </Text>
                   </View>
                   <View style={styles.infoContainer}>
                     <Ionicons name="cash-outline" size={18} color="#0097A7" />
-                    <Text style={styles.detailText}>{item.price ? `${item.price} د.ت` : "مجاني"}</Text>
+                    <Text style={styles.detailText}>
+                      {item.price ? `${item.price} د.ت` : "مجاني"}
+                    </Text>
                   </View>
+
                   <Text style={styles.webinarDescription} numberOfLines={2}>
                     {item.description || "لا يوجد وصف متاح لهذا الدرس."}
                   </Text>
@@ -185,7 +212,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
 
-  webinarContainer: { 
+  webinarContainer: {
     marginVertical: 10,
     paddingHorizontal: 15,
   },
@@ -198,23 +225,56 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
-    flexDirection: "row-reverse", 
+    flexDirection: "row-reverse",
     alignItems: "center",
   },
 
   webinarImage: { width: 130, height: 130, borderRadius: 10 },
 
-  webinarDetails: { marginRight: 15, flex: 1 }, 
+  webinarDetails: { marginRight: 15, flex: 1 },
 
   webinarTitle: { fontSize: 16, fontWeight: "bold", color: "#1F3B64", textAlign: "right" },
 
-  infoContainer: { flexDirection: "row-reverse", alignItems: "center", marginTop: 5 },
+  infoContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 6,
+  },
 
-  detailText: { fontSize: 14, marginRight: 5, color: "#555", textAlign: "right" },
+  detailText: { fontSize: 14, color: "#555", textAlign: "right" },
 
   webinarDescription: { fontSize: 12, color: "#777", marginTop: 8, textAlign: "right" },
 
-  noWebinarsText: { fontSize: 18, color: "#777", textAlign: "center", marginTop: 50 },
+  teacherAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    marginLeft: 5,
+  },
+
+  initialsCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#0097A7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 5,
+  },
+
+  initialsText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+
+  noWebinarsText: {
+    fontSize: 18,
+    color: "#777",
+    textAlign: "center",
+    marginTop: 50,
+  },
 });
 
 export default WebinarsScreen;

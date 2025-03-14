@@ -9,8 +9,8 @@ I18nManager.allowRTL(false);
 
 // ✅ Dummy Notifications Data
 const notifications = [
-  { id: "1", text: "تم إنشاء درس جديد", time: "منذ 15 دقيقة", icon: require("../../assets/icons/bell.png") },
-  { id: "2", text: "تم إنشاء درس جديد", time: "منذ 50 دقيقة", icon: require("../../assets/icons/bell.png") },
+  { id: "1", text: "تم إنشاء درس جديد", time: "منذ 15 دقيقة", icon: require("../../assets/icons/notification.png") },
+  { id: "2", text: "تم إنشاء درس جديد", time: "منذ 50 دقيقة", icon: require("../../assets/icons/notification.png") },
 ];
 
 const NotificationsScreen = () => {

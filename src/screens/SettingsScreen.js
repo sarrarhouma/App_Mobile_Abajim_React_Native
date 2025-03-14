@@ -70,7 +70,7 @@ const SettingsScreen = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>إعدادات</Text>
+        <Text style={styles.headerText}>الإعدادات</Text>
       </View>
 
       <View style={styles.profileSection}>

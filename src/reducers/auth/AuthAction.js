@@ -719,8 +719,6 @@ export const toggleFollow = (teacherId) => async (dispatch) => {
       return;
     }
 
-    console.log("📌 Follower ID:", follower, "| Teacher ID:", teacherId);
-
     const isFollowingRes = await fetch(`${API_URL}/follows/is-following/${follower}/${teacherId}`);
     const { isFollowing } = await isFollowingRes.json();
 
@@ -734,7 +732,6 @@ export const toggleFollow = (teacherId) => async (dispatch) => {
     });
 
     const followData = await followRes.json();
-    console.log("✅ Follow/Unfollow API response:", followData);
 
     if (!followRes.ok) {
       console.warn("❌ Erreur lors du follow/unfollow :", followData?.error || "Erreur inconnue");

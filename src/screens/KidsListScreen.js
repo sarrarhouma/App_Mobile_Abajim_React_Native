@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
 
   // ✅ Styling des cartes enfants
   childWrapper: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     backgroundColor: "#FFF",
     padding: 15,
