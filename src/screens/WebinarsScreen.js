@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import ChildSwitcher from "../components/ChildSwitcher";
 
-// ✅ Fonction utilitaire pour extraire les initiales du nom complet
 const getInitials = (fullName) => {
   if (!fullName) return "؟";
   const names = fullName.trim().split(" ");
@@ -50,42 +49,51 @@ const WebinarsScreen = () => {
     }
   }, [activeChild, dispatch]);
 
+  const filteredWebinars = webinars?.filter((item) =>
+    item.slug?.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <ChildSwitcher />
-        <View style={styles.headerBottom}>
-          <Text style={styles.title}> الدروس الإضافية</Text>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-              <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="🔎 ابحث عن درس..."
-          value={searchText}
-          onChangeText={setSearchText}
-          textAlign="right"
-        />
-        <TouchableOpacity style={styles.searchButton}>
-          <Ionicons name="search" size={22} color="white" />
-        </TouchableOpacity>
-      </View>
-
       {loading ? (
         <ActivityIndicator size="large" color="#0097A7" style={styles.loading} />
-      ) : Array.isArray(webinars) && webinars.length > 0 ? (
+      ) : (
         <FlatList
-          data={webinars.filter((item) => item.slug?.includes(searchText))}
+          data={filteredWebinars}
           keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.webinarsList}
+          ListHeaderComponent={
+            <>
+              <View style={styles.header}>
+                {/* <ChildSwitcher /> */}
+                <View style={styles.headerBottom}>
+                  <Text style={styles.title}> الدروس الإضافية</Text>
+                  <View style={styles.headerIcons}>
+                    <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
+                      <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* Search Bar */}
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="🔎 ابحث عن درس..."
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  textAlign="right"
+                />
+                <TouchableOpacity style={styles.searchButton}>
+                  <Ionicons name="search" size={22} color="white" />
+                </TouchableOpacity>
+              </View>
+            </>
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.webinarContainer}
@@ -100,7 +108,6 @@ const WebinarsScreen = () => {
                 <View style={styles.webinarDetails}>
                   <Text style={styles.webinarTitle}>{item.slug}</Text>
 
-                  {/* ✅ Avatar ou Initiales du professeur */}
                   <View style={styles.infoContainer}>
                     {item.teacher?.avatar ? (
                       <Image
@@ -141,12 +148,11 @@ const WebinarsScreen = () => {
               </View>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.webinarsList}
+          ListEmptyComponent={
+            <Text style={styles.noWebinarsText}>🚫 لا يوجد دروس فيديو متاحة لهذا المستوى</Text>
+          }
         />
-      ) : (
-        <Text style={styles.noWebinarsText}>🚫 لا يوجد دروس فيديو متاحة لهذا المستوى</Text>
       )}
-
       <BottomNavigation />
     </View>
   );
@@ -158,7 +164,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0097A7",
     paddingHorizontal: 20,
-    paddingVertical: 55,
+    paddingVertical: 40,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
@@ -170,6 +176,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     marginTop: 15,
+    // width: "100%",
   },
 
   title: {
@@ -208,8 +215,7 @@ const styles = StyleSheet.create({
   },
 
   webinarsList: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingBottom: 90,
   },
 
   webinarContainer: {
@@ -274,6 +280,14 @@ const styles = StyleSheet.create({
     color: "#777",
     textAlign: "center",
     marginTop: 50,
+  },
+
+  logoutButton: {
+    marginRight: 15,
+  },
+
+  loading: {
+    marginTop: 20,
   },
 });
 

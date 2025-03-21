@@ -8,26 +8,30 @@ import {
   StyleSheet,
   Alert,
   FlatList,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { useNavigation, useRoute  } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { addChild, updateChild  } from "../reducers/auth/AuthAction"; // ✅ Import Redux Action
+import { addChild, updateChild } from "../reducers/auth/AuthAction";
 
 const AddKidsScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const loading = useSelector((state) => state.auth.isLoading);
-  const childrenCount = useSelector((state) => state.auth.children.length); // ✅ Track number of children
+  const childrenCount = useSelector((state) => state.auth.children.length);
   const route = useRoute();
-const existingChild = route.params?.child || null;
+  const existingChild = route.params?.child || null;
 
-
-  const [kidsList, setKidsList] = useState([]); // ✅ Store added kids temporarily
+  const [kidsList, setKidsList] = useState([]);
   const [childName, setChildName] = useState(existingChild?.full_name || "");
-  const [selectedGender, setSelectedGender] = useState( existingChild?.sexe === "Garçon" ? "male" : existingChild?.sexe === "Fille" ? "female" : null);
+  const [selectedGender, setSelectedGender] = useState(
+    existingChild?.sexe === "Garçon" ? "male" :
+    existingChild?.sexe === "Fille" ? "female" : null
+  );
   const [selectedLevel, setSelectedLevel] = useState(existingChild ? existingChild.level_id - 5 : null);
 
-  // ✅ Level icons mapping
   const levelIcons = {
     1: require("../../assets/icons/one.png"),
     2: require("../../assets/icons/two.png"),
@@ -37,160 +41,157 @@ const existingChild = route.params?.child || null;
     6: require("../../assets/icons/six.png"),
   };
 
-  // ✅ Function to map frontend levels (1-6) to backend levels (6-11)
   const mapLevelToBackend = (level) => level + 5;
-
-  // ✅ Function to convert gender format for API
   const formatGender = (gender) => (gender === "male" ? "Garçon" : "Fille");
 
-  // ✅ Handle adding a child
   const handleSaveChild = () => {
     if (!childName || !selectedGender || !selectedLevel) {
       Alert.alert("⚠️ خطأ", "يرجى ملء جميع الحقول قبل المتابعة");
       return;
     }
-  
+
     const backendLevelId = mapLevelToBackend(selectedLevel);
-  
+
     if (existingChild) {
-      // ✅ Mode mise à jour
       const updatedChild = {
         id: existingChild.id,
         nom: childName,
         level_id: backendLevelId,
       };
-  
-      console.log("🔄 Updating Child:", updatedChild);
+
       dispatch(updateChild(updatedChild, () => {
         Alert.alert("✅ تم تحديث الطفل بنجاح");
-        navigation.navigate("Settings"); // ✅ Navigate back to Settings after update
+        navigation.navigate("Settings");
       }));
     } else {
-      // ✅ Mode ajout
       const newChild = {
         Nom: childName,
         sexe: formatGender(selectedGender),
         level_id: backendLevelId,
       };
-  
-      console.log("✅ Adding New Child:", newChild);
+
       dispatch(addChild(newChild, navigation));
     }
   };
-  
 
-  // ✅ Handle submitting all children to backend
   const handleSubmitAll = () => {
-    console.log("🔄 Sending Kids to API...");
     kidsList.forEach((child) => dispatch(addChild(child, navigation)));
-
-    // ✅ Navigate to Books after all kids are added
     navigation.navigate("Books");
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>قم بملء البيانات لإضافة طفلك</Text>
-      </View>
-
-      {/* Image */}
-      <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
-
-      {/* Name Input */}
-      <Text style={styles.label}>الاسم</Text>
-      <View style={styles.inputContainer}>
-        <Image source={require("../../assets/icons/user.png")} style={styles.inputIcon} />
-        <TextInput
-          style={styles.input}
-          placeholder="الاسم"
-          placeholderTextColor="#DADADA"
-          value={childName}
-          onChangeText={setChildName}
-        />
-      </View>
-
-      {/* Gender Selection */}
-      <Text style={styles.label}>الجنس</Text>
-      <View style={styles.genderContainer}>
-        <TouchableOpacity
-          style={[styles.genderButton, selectedGender === "male" && styles.selectedButton]}
-          onPress={() => setSelectedGender("male")}
-        >
-          <Image source={require("../../assets/icons/male.png")} style={styles.genderIcon} />
-          <Text style={styles.genderText}>ذكر</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.genderButton, selectedGender === "female" && styles.selectedButton]}
-          onPress={() => setSelectedGender("female")}
-        >
-          <Image source={require("../../assets/icons/female.png")} style={styles.genderIcon} />
-          <Text style={styles.genderText}>أنثى</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* School Level Selection */}
-      <Text style={styles.label}>المستوى الدراسي</Text>
-      <View style={styles.levelContainer}>
-        <View style={styles.levelRow}>
-          {[1, 2, 3].map((level) => (
-            <TouchableOpacity
-              key={level}
-              style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
-              onPress={() => setSelectedLevel(level)}
-            >
-              <Image source={levelIcons[level]} style={styles.levelIcon} />
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.levelRow}>
-          {[4, 5, 6].map((level) => (
-            <TouchableOpacity
-              key={level}
-              style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
-              onPress={() => setSelectedLevel(level)}
-            >
-              <Image source={levelIcons[level]} style={styles.levelIcon} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* List of Added Kids */}
-      <FlatList
-        data={kidsList}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.kidItem}>
-            <Text style={styles.kidText}>{item.Nom} - {item.sexe} - مستوى {item.level_id - 5}</Text>
-          </View>
-        )}
-      />
-
-      {/* Buttons */}
-      <View style={styles.buttonContainer}>
-      <TouchableOpacity style={styles.addButton} onPress={handleSaveChild} disabled={loading}>
-  <Text style={styles.buttonText}>
-    {loading ? "جاري الحفظ..." : existingChild ? "تحديث الطفل" : "إضافة طفل"}
-  </Text>
-</TouchableOpacity>
-
-
-        {/* Show "Next" button only if at least 1 kid is added */}
-        {kidsList.length > 0 && (
-          <TouchableOpacity style={styles.addButton} onPress={handleSubmitAll}>
-            <Text style={styles.buttonText}>التالي</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+                <View style={styles.container}>
+            {/* 🔙 Bouton de retour */}
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Image source={require("../../assets/icons/back.png")} style={styles.backIcon} />
           </TouchableOpacity>
-        )}
-      </View>
-    </View>
+
+          <View style={styles.header}>
+            <Text style={styles.title}>قم بملء البيانات لإضافة طفلك</Text>
+          </View>
+
+          <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
+
+          <Text style={styles.label}>الاسم</Text>
+          <View style={styles.inputContainer}>
+            <Image source={require("../../assets/icons/user.png")} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="الاسم"
+              placeholderTextColor="#DADADA"
+              value={childName}
+              onChangeText={setChildName}
+            />
+          </View>
+
+          <Text style={styles.label}>الجنس</Text>
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
+              style={[styles.genderButton, selectedGender === "male" && styles.selectedButton]}
+              onPress={() => setSelectedGender("male")}
+            >
+              <Image source={require("../../assets/icons/male.png")} style={styles.genderIcon} />
+              <Text style={styles.genderText}>ذكر</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.genderButton, selectedGender === "female" && styles.selectedButton]}
+              onPress={() => setSelectedGender("female")}
+            >
+              <Image source={require("../../assets/icons/female.png")} style={styles.genderIcon} />
+              <Text style={styles.genderText}>أنثى</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.label}>المستوى الدراسي</Text>
+          <View style={styles.levelContainer}>
+            <View style={styles.levelRow}>
+              {[1, 2, 3].map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
+                  onPress={() => setSelectedLevel(level)}
+                >
+                  <Image source={levelIcons[level]} style={styles.levelIcon} />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.levelRow}>
+              {[4, 5, 6].map((level) => (
+                <TouchableOpacity
+                  key={level}
+                  style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
+                  onPress={() => setSelectedLevel(level)}
+                >
+                  <Image source={levelIcons[level]} style={styles.levelIcon} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <FlatList
+            data={kidsList}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.kidItem}>
+                <Text style={styles.kidText}>{item.Nom} - {item.sexe} - مستوى {item.level_id - 5}</Text>
+              </View>
+            )}
+          />
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.addButton} onPress={handleSaveChild} disabled={loading}>
+              <Text style={styles.buttonText}>
+                {loading ? "جاري الحفظ..." : existingChild ? "تحديث الطفل" : "إضافة طفل"}
+              </Text>
+            </TouchableOpacity>
+
+            {kidsList.length > 0 && (
+              <TouchableOpacity style={styles.addButton} onPress={handleSubmitAll}>
+                <Text style={styles.buttonText}>التالي</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
-// ✅ Styles remain unchanged
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F5F5", padding: 20, alignItems: "center" },
+  scrollContainer: {
+    paddingBottom: 30,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+    padding: 60,
+    alignItems: "center",
+  },
   header: { marginBottom: 20 },
   title: { fontSize: 22, fontWeight: "bold", textAlign: "center", color: "#1F3B64" },
   image: { width: 230, height: 150, resizeMode: "contain", marginBottom: 20 },
@@ -232,16 +233,25 @@ const styles = StyleSheet.create({
   },
   selectedLevel: { backgroundColor: "#0097A7" },
   levelIcon: { width: 60, height: 60 },
-  buttonContainer: { flexDirection: "row", justifyContent: "center", width: "100%" },
+  buttonContainer: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", width: "100%" },
   addButton: {
     backgroundColor: "#1F3B64",
     padding: 13,
     borderRadius: 12,
     alignItems: "center",
     width: "45%",
-     margin: 7 
+    margin: 7,
   },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 15,
+    zIndex: 999,
+  },
+  
   buttonText: { fontSize: 20, color: "#FFF", fontWeight: "bold" },
+  kidItem: { marginVertical: 5 },
+  kidText: { color: "#1F3B64", fontSize: 16 },
 });
 
 export default AddKidsScreen;

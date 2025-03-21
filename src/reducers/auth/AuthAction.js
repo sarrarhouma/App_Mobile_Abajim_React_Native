@@ -753,3 +753,26 @@ export const toggleFollow = (teacherId) => async (dispatch) => {
     console.error("❌ Follow/unfollow error:", error);
   }
 };
+
+// notifications
+
+export const FETCH_NOTIFICATIONS_REQUEST = "FETCH_NOTIFICATIONS_REQUEST";
+export const FETCH_NOTIFICATIONS_SUCCESS = "FETCH_NOTIFICATIONS_SUCCESS";
+export const FETCH_NOTIFICATIONS_FAILURE = "FETCH_NOTIFICATIONS_FAILURE";
+
+export const fetchNotifications = (childId) => async (dispatch) => {
+  dispatch({ type: FETCH_NOTIFICATIONS_REQUEST });
+
+  try {
+    const response = await fetch(`${API_URL}/notifications/child/${childId}`);
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Échec récupération notifications");
+
+    dispatch({ type: FETCH_NOTIFICATIONS_SUCCESS, payload: data });
+  } catch (error) {
+    console.error("❌ Error fetching notifications:", error.message);
+    dispatch({ type: FETCH_NOTIFICATIONS_FAILURE, payload: error.message });
+  }
+};
+

@@ -70,7 +70,7 @@ const AppNavigator = () => {
             {/* If user has children, go to Books. Otherwise, show AddKids */}
             <Stack.Screen name="Books" component={BooksScreen} options={{ headerShown: false }} />
             <Stack.Screen name="DocumentScreen" component={DocumentScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ title: "إضافة طفل" }} />
+            <Stack.Screen name="AddKids" component={AddKidsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Settings" component={SettingsNavigator} options={{ headerShown: false }} /> 
             <Stack.Screen name="Webinars" component={WebinarsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="WebinarDetail" component={WebinarDetail} options={{ headerShown: false }}/>

@@ -14,7 +14,7 @@ import { Logout } from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import API_BASE_URL from "../utils/Config";
-import ChildSwitcher from "../components/ChildSwitcher"; // ✅ ChildSwitcher Component
+import ChildSwitcher from "../components/ChildSwitcher";
 
 const BooksScreen = () => {
   const navigation = useNavigation();
@@ -23,11 +23,9 @@ const BooksScreen = () => {
   const [manuals, setManuals] = useState([]);
 
   const children = useSelector((state) => state.auth.children);
-  const activeChild = useSelector((state) => state.auth.activeChild) || children[0]; // ✅ Set first child by default
+  const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
 
-  // ✅ Function to Open Document
   const handleOpenDocument = (documentUrl) => {
-    console.log("📄 Opening document URL:", documentUrl);
     navigation.navigate("DocumentScreen", { documentUrl });
   };
 
@@ -53,11 +51,8 @@ const BooksScreen = () => {
   const fetchManuelsByLevel = async (level_id) => {
     try {
       setLoading(true);
-      console.log(`🔄 Fetching books for level: ${level_id}`);
-
       const response = await fetch(`${API_BASE_URL}/manuels/level/${level_id}`);
       const data = await response.json();
-
       if (response.ok) {
         setManuals(data);
       } else {
@@ -71,34 +66,16 @@ const BooksScreen = () => {
     }
   };
 
-
   return (
     <View style={styles.container}>
-      {/* 🔹 BLUE HEADER BACKGROUND (RESTORED) */}
-      <View style={styles.header}>
-        <ChildSwitcher /> {/* ✅ New Component for Parent & Children Profiles */}
-        {/* 🔹 Title & Icons */}
-        <View style={styles.headerBottom}>
-          <Text style={styles.title}> الكتب المدرسية</Text>
-          <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-            <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
-          </TouchableOpacity>
-            <TouchableOpacity>
-              <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      {/* 🔹 Loading Indicator */}
       {loading ? (
         <ActivityIndicator size="large" color="#0097A7" style={styles.loading} />
-      ) : manuals.length > 0 ? (
+      ) : (
         <FlatList
           data={manuals}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
+          contentContainerStyle={styles.booksList}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.bookContainer} onPress={() => handleOpenDocument(item)}>
               <View style={styles.bookCard}>
@@ -107,13 +84,28 @@ const BooksScreen = () => {
               </View>
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.booksList}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              {/* <ChildSwitcher /> */}
+              <View style={styles.headerBottom}>
+                <Text style={styles.title}> الكتب المدرسية</Text>
+                <View style={styles.headerIcons}>
+                  <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
+                    <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
+                  </TouchableOpacity>
+                  <TouchableOpacity>
+                    <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          }
+          ListEmptyComponent={
+            <Text style={styles.noBooksText}>لا يوجد كتب متاحة لهذا المستوى</Text>
+          }
         />
-      ) : (
-        <Text style={styles.noBooksText}>لا يوجد كتب متاحة لهذا المستوى</Text>
       )}
 
-      {/* ✅ Bottom Navigation */}
       <BottomNavigation />
     </View>
   );
@@ -125,8 +117,8 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0097A7",
     paddingHorizontal: 20,
-    paddingVertical: 55,
-    borderBottomLeftRadius: 30,
+    paddingVertical: 40,
+    borderBottomLeftRadius: 32,
     borderBottomRightRadius: 30,
     alignItems: "center",
   },
@@ -137,12 +129,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     marginTop: 10,
+    // width: "100%",
   },
 
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    alignItems: "center",
     color: "#FFF",
   },
 
@@ -158,8 +150,7 @@ const styles = StyleSheet.create({
   },
 
   booksList: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingBottom: 90, // espace pour BottomNavigation
   },
 
   bookContainer: {
@@ -193,17 +184,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: "#FFF",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-
   logoutButton: { marginRight: 15 },
   loading: { marginTop: 20 },
 
@@ -214,6 +194,5 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
 });
-
 
 export default BooksScreen;

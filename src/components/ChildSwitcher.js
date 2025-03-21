@@ -40,7 +40,7 @@ const ChildSwitcher = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.profileContainer}>
-          {/* ✅ Parent */}
+          {/* ✅ Parent
           <TouchableOpacity
             onPress={() => navigation.navigate("Settings", { screen: "ParentInfo" })}
             style={styles.parentProfileWrapper}
@@ -59,11 +59,11 @@ const ChildSwitcher = () => {
               </View>
             )}
             <Text style={styles.parentName}>{parentInfo?.full_name || "ولي الأمر"}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* ✅ Enfants */}
           <View>
-          <FlatList
+            <FlatList
               data={children}
               horizontal
               keyExtractor={(item) => item.id.toString()}
@@ -75,26 +75,28 @@ const ChildSwitcher = () => {
                   ? item.avatar
                   : `https://www.abajim.com/${item.avatar?.startsWith("/") ? item.avatar.substring(1) : item.avatar}`;
 
+                const isActive = activeChild?.id === item.id;
+
                 return (
                   <TouchableOpacity
                     onPress={() => dispatch(switchChild(item))}
-                    style={[
-                      styles.childProfileWrapper,
-                      activeChild?.id === item.id && styles.activeChildBorder,
-                    ]}
+                    style={styles.childWrapper}
                   >
-                    <Image
-                      source={{ uri: avatarUrl }}
-                      style={styles.childProfile}
-                    />
-                    {activeChild?.id === item.id && <View style={styles.activeDot} />}
+                    <View style={[
+                      styles.childProfileWrapper,
+                      isActive && styles.activeChildBorder,
+                    ]}>
+                      <Image
+                        source={{ uri: avatarUrl }}
+                        style={styles.childProfile}
+                      />
+                      {isActive && <View style={styles.activeDot} />}
+                    </View>
+                    <Text style={styles.childName} numberOfLines={1}>{item.full_name}</Text>
                   </TouchableOpacity>
                 );
               }}
             />
-
-
-            
           </View>
         </View>
       </View>
@@ -158,24 +160,34 @@ const styles = StyleSheet.create({
     color: "#1F3B64",
     marginTop: 5,
   },
+  childWrapper: {
+    alignItems: "center",
+    marginHorizontal: 6,
+    maxWidth: 70,
+  },
   childProfileWrapper: {
     position: "relative",
-    marginLeft: 10,
-    alignItems: "center", // ✅ aligne le point et l'image verticalement
-    justifyContent: "center", // ✅ ajoute si nécessaire pour centrer
-    width: 50, // ✅ largeur fixe pour que le dot soit toujours au bon endroit
+    alignItems: "center",
+    justifyContent: "center",
+    width: 65,
+    height: 65,
+    borderRadius: 33,
   },
-  
   childProfile: {
-    width: 45,
-    height: 45,
-    borderRadius: 25,
+    width: 55,
+    height: 55,
+    borderRadius: 28,
   },
-  
+  childName: {
+    fontSize: 12,
+    color: "#1F3B64",
+    textAlign: "center",
+    marginTop: 5,
+  },
   activeDot: {
     position: "absolute",
     bottom: 0,
-    left: 35, // ✅ positionné à droite bas (car image = 45px)
+    left: 38, // ✅ positionné à droite bas
     width: 12,
     height: 12,
     backgroundColor: "green",
@@ -183,12 +195,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FFF",
   },
-  
   activeChildBorder: {
     borderWidth: 2,
     borderColor: "#0097A7",
-    borderRadius: 30,
+    borderRadius: 33,
     padding: 2,
+    backgroundColor: "#FFF", // ✅ pour bien voir le contour bleu
   },
   // welcomeText: {
   //   marginTop: 8,

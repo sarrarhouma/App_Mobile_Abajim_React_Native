@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ImageBackground, Alert 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ImageBackground,
+  Alert
 } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { Ionicons } from '@expo/vector-icons';
 import { resetPassword } from "../reducers/auth/AuthAction";
 
 export default function ResetPasswordScreen({ route, navigation }) {
@@ -20,18 +28,23 @@ export default function ResetPasswordScreen({ route, navigation }) {
       Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
       return;
     }
-    
+
     dispatch(resetPassword(phone, newPassword, navigation));
   };
 
   return (
     <ImageBackground source={require("../../assets/images/ba1.png")} style={styles.background}>
       <View style={styles.container}>
+        {/* ✅ Bouton retour */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={28} color="white" />
+        </TouchableOpacity>
+
         <Image source={require('../../assets/images/icon.png')} style={styles.logo} />
         <Text style={styles.title}>إعادة تعيين كلمة المرور</Text>
         <Text style={styles.subtitle}>أدخل كلمة المرور الجديدة لحسابك</Text>
 
-        {/* Input du Nouveau Mot de Passe */}
+        {/* Nouveau mot de passe */}
         <Text style={styles.label}>كلمة المرور الجديدة</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -44,7 +57,7 @@ export default function ResetPasswordScreen({ route, navigation }) {
           />
         </View>
 
-        {/* Confirmation du Mot de Passe */}
+        {/* Confirmation */}
         <Text style={styles.label}>تأكيد كلمة المرور</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -65,7 +78,6 @@ export default function ResetPasswordScreen({ route, navigation }) {
   );
 }
 
-// Styles cohérents avec ForgetPasswordScreen & VerificationScreen
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -81,10 +93,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 170,
   },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 15,
+    zIndex: 999,
+  },
   logo: {
     width: 80,
     height: 80,
-    marginBottom: 30, 
+    marginBottom: 30,
   },
   title: {
     fontSize: 22,
@@ -130,7 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
-    marginTop: 10, 
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
@@ -138,4 +156,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

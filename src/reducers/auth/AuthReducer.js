@@ -14,6 +14,8 @@ const initialState = {
     teacherProfile: null,
     isFollowing: false,
     followersCount: 0,
+    notifications: [],
+
 
 };
 
@@ -222,7 +224,15 @@ const authReducer = (state = initialState, action) => {
                 ...state,
                 followersCount: action.payload,
             };
+        case "FETCH_NOTIFICATIONS_REQUEST":
+            return { ...state, isLoading: true };
               
+        case "FETCH_NOTIFICATIONS_SUCCESS":
+            return { ...state, notifications: action.payload, isLoading: false };
+              
+        case "FETCH_NOTIFICATIONS_FAILURE":
+            return { ...state, isLoading: false, error: action.payload };
+                    
         default:
             return state;
     }
