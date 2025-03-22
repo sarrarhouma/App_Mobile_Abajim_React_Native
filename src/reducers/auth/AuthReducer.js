@@ -15,6 +15,8 @@ const initialState = {
     isFollowing: false,
     followersCount: 0,
     notifications: [],
+    manuals: [],
+    videoCounts: {},
 
 
 };
@@ -232,7 +234,19 @@ const authReducer = (state = initialState, action) => {
               
         case "FETCH_NOTIFICATIONS_FAILURE":
             return { ...state, isLoading: false, error: action.payload };
-                    
+        case "FETCH_MANUELS_SUCCESS":
+            return {
+                ...state,
+                manuals: action.payload,
+                isLoading: false,
+            };
+              
+        case "FETCH_VIDEO_COUNTS_SUCCESS":
+            return {
+                 ...state,
+                videoCounts: action.payload,
+                isLoading: false,
+            };            
         default:
             return state;
     }

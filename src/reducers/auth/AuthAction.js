@@ -776,3 +776,44 @@ export const fetchNotifications = (childId) => async (dispatch) => {
   }
 };
 
+// fetch manuel by level and videos by mmanuel for BooksScreen 
+
+export const FETCH_MANUELS_SUCCESS = "FETCH_MANUELS_SUCCESS";
+export const FETCH_VIDEO_COUNTS_SUCCESS = "FETCH_VIDEO_COUNTS_SUCCESS";
+
+// ✅ Fetch manuels par niveau
+export const fetchManuelsByLevel = (levelId) => async (dispatch) => {
+  dispatch({ type: "AUTH_LOADING" });
+  try {
+    const response = await fetch(`${API_URL}/manuels/level/${levelId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      dispatch({ type: FETCH_MANUELS_SUCCESS, payload: data });
+    } else {
+      console.error("❌ Error fetching manuels:", data.error);
+    }
+  } catch (error) {
+    console.error("❌ Error fetching manuels:", error);
+  }
+};
+
+// ✅ Fetch nombre de vidéos par manuel
+export const fetchVideoCounts = () => async (dispatch) => {
+  try {
+    const response = await fetch(`${API_URL}/videos/count-by-manuel`);
+    const data = await response.json();
+
+    if (response.ok) {
+      const formatted = {};
+      data.forEach((item) => {
+        formatted[item.manuel_id] = item.totalVideos;
+      });
+      dispatch({ type: FETCH_VIDEO_COUNTS_SUCCESS, payload: formatted });
+    } else {
+      console.error("❌ Error fetching video counts:", data.error);
+    }
+  } catch (error) {
+    console.error("❌ Error fetching video counts:", error);
+  }
+};
