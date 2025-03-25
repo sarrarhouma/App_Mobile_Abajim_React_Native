@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { Logout, fetchWebinarsByLevel } from "../reducers/auth/AuthAction";
+import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword } from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import ChildSwitcher from "../components/ChildSwitcher";
@@ -49,9 +49,26 @@ const WebinarsScreen = () => {
     }
   }, [activeChild, dispatch]);
 
-  const filteredWebinars = webinars?.filter((item) =>
-    item.slug?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  useEffect(() => {
+    if (searchText.trim() !== "" && activeChild?.level_id) {
+      dispatch(fetchWebinarsByKeyword(activeChild.level_id, searchText.trim()));
+    } else if (activeChild?.level_id) {
+      dispatch(fetchWebinarsByLevel(activeChild.level_id));
+    }
+  }, [searchText]);
+  
+
+  useEffect(() => {
+    if (searchText.trim() === "") {
+      if (activeChild?.level_id) dispatch(fetchWebinarsByLevel(activeChild.level_id));
+    }
+  }, [searchText]);
+
+  const handleSearch = () => {
+    if (searchText.trim() && activeChild?.level_id) {
+      dispatch(searchWebinarsByKeyword(activeChild.level_id, searchText.trim()));
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -59,7 +76,7 @@ const WebinarsScreen = () => {
         <ActivityIndicator size="large" color="#0097A7" style={styles.loading} />
       ) : (
         <FlatList
-          data={filteredWebinars}
+          data={webinars}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.webinarsList}
           ListHeaderComponent={
@@ -88,9 +105,18 @@ const WebinarsScreen = () => {
                   onChangeText={setSearchText}
                   textAlign="right"
                 />
-                <TouchableOpacity style={styles.searchButton}>
-                  <Ionicons name="search" size={22} color="white" />
-                </TouchableOpacity>
+                <TouchableOpacity
+                style={styles.searchButton}
+                onPress={() => {
+                  if (searchText.trim() !== "") {
+                    dispatch(fetchWebinarsByKeyword(activeChild.level_id, searchText));
+                  } else {
+                    dispatch(fetchWebinarsByLevel(activeChild.level_id));
+                  }
+                }}
+              >
+                <Ionicons name="search" size={22} color="white" />
+              </TouchableOpacity>
               </View>
             </>
           }
@@ -122,7 +148,7 @@ const WebinarsScreen = () => {
                     <TouchableOpacity
                       onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
                     >
-                      <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
+                      <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}> 
                         {item.teacher?.full_name || "غير متوفر"}
                       </Text>
                     </TouchableOpacity>
@@ -176,7 +202,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     marginTop: 15,
-    // width: "100%",
   },
 
   title: {

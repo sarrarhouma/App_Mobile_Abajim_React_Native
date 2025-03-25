@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://cc53-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://8a3b-2c0f-f3a0-125-39e6-55d9-d6e8-6d24-581f.ngrok-free.app/api'; 
 import { Alert } from "react-native";
 
 
@@ -817,3 +817,27 @@ export const fetchVideoCounts = () => async (dispatch) => {
     console.error("❌ Error fetching video counts:", error);
   }
 };
+// ✅  rechercher des webinaires par mot clé et level_id
+export const SEARCH_WEBINARS_REQUEST = "SEARCH_WEBINARS_REQUEST";
+export const SEARCH_WEBINARS_SUCCESS = "SEARCH_WEBINARS_SUCCESS";
+export const SEARCH_WEBINARS_FAILURE = "SEARCH_WEBINARS_FAILURE";
+
+export const fetchWebinarsByKeyword = (levelId, keyword) => async (dispatch) => {
+  dispatch({ type: "FETCH_WEBINARS_REQUEST" });
+
+  try {
+    const response = await fetch(`${API_URL}/webinars/search/${levelId}/${keyword}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      dispatch({ type: "FETCH_WEBINARS_SUCCESS", payload: data });
+    } else {
+      console.error("❌ Erreur API webinars/search :", data.error);
+      dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: data.error });
+    }
+  } catch (error) {
+    console.error("❌ Erreur fetchWebinarsByKeyword :", error.message);
+    dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: error.message });
+  }
+};
+
