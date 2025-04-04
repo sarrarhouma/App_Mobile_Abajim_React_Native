@@ -9,6 +9,7 @@ import ForgetPasswordScreen from "../screens/forgetPasswordScreen";
 import VerificationScreen from "../screens/VerificationScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen"; 
 import SignInScreen from "../screens/SignInScreen";
+import FavoritesScreen from "../screens/FavoritesScreen";
 
 const Stack = createStackNavigator();
 
@@ -24,6 +25,7 @@ const SettingsNavigator = () => {
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="Favorites" component={FavoritesScreen} /> 
     </Stack.Navigator>
   );
 };

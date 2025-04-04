@@ -246,7 +246,29 @@ const authReducer = (state = initialState, action) => {
                  ...state,
                 videoCounts: action.payload,
                 isLoading: false,
-            };            
+            };
+        case "TOGGLE_FAVORITE_SUCCESS":
+            return {
+                ...state,
+                webinars: state.webinars.map((webinar) =>
+                webinar.id === action.payload.webinarId
+                    ? { ...webinar, isFavorite: action.payload.isFavorite }
+                    : webinar
+                ),
+            };
+              
+        case "FETCH_FAVORITES_SUCCESS":
+            return {
+                ...state,
+                favorites: action.payload,
+                webinars: state.webinars.map((webinar) => ({
+                ...webinar,
+                isFavorite: action.payload.includes(webinar.id),
+                })),
+            };
+              
+              
+                
         default:
             return state;
     }

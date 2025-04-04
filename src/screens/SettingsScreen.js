@@ -102,10 +102,15 @@ const SettingsScreen = () => {
           <Text style={styles.optionText}>أطفالي</Text>
           <Ionicons name="people-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
-
+       
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Notifications")}>
           <Text style={styles.optionText}>إشعارات</Text>
           <Ionicons name="notifications-outline" size={24} color="#1F3B64" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Favorites")}>
+          <Text style={styles.optionText}>دروسي الإضافية المفضلة</Text>
+          <Ionicons name="heart-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("MyCard")}>

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://8a3b-2c0f-f3a0-125-39e6-55d9-d6e8-6d24-581f.ngrok-free.app/api'; 
+export const API_URL = 'https://27ef-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
 
 
@@ -838,6 +838,62 @@ export const fetchWebinarsByKeyword = (levelId, keyword) => async (dispatch) => 
   } catch (error) {
     console.error("❌ Erreur fetchWebinarsByKeyword :", error.message);
     dispatch({ type: "FETCH_WEBINARS_FAILURE", payload: error.message });
+  }
+};
+
+// ✅ Ajouter un webinar comme favori
+export const TOGGLE_FAVORITE_SUCCESS = "TOGGLE_FAVORITE_SUCCESS";
+export const TOGGLE_FAVORITE_FAILURE = "TOGGLE_FAVORITE_FAILURE";
+export const FETCH_FAVORITES_SUCCESS = "FETCH_FAVORITES_SUCCESS";
+
+export const toggleFavorite = (webinarId) => async (dispatch) => {
+  try {
+    const tokenChild = await AsyncStorage.getItem("tokenChild"); 
+    if (!tokenChild) throw new Error("Token enfant manquant !");
+
+    const response = await fetch(`${API_URL}/likes/favorite/${webinarId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenChild}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error || "Erreur lors du toggle favori");
+
+    dispatch({
+      type: TOGGLE_FAVORITE_SUCCESS,
+      payload: { webinarId, isFavorite: data.isFavorite }
+    });
+
+    dispatch(fetchFavorites());
+  } catch (error) {
+    console.error("❌ Erreur toggleFavorite:", error.message);
+  }
+};
+
+export const fetchFavorites = () => async (dispatch) => {
+  try {
+    const tokenChild = await AsyncStorage.getItem("tokenChild"); 
+    if (!tokenChild) throw new Error("Utilisateur non authentifié.");
+
+    const response = await fetch(`${API_URL}/likes/favorites`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${tokenChild}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error("Erreur lors de la récupération des favoris");
+
+    const favoritesIds = data.map((w) => w.id);
+    dispatch({ type: FETCH_FAVORITES_SUCCESS, payload: favoritesIds });
+  } catch (error) {
+    console.error("❌ Erreur fetchFavorites:", error.message);
   }
 };
 

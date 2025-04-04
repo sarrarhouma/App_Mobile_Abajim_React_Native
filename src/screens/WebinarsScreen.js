@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword } from "../reducers/auth/AuthAction";
+import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword, toggleFavorite , fetchFavorites} from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import ChildSwitcher from "../components/ChildSwitcher";
@@ -69,6 +69,19 @@ const WebinarsScreen = () => {
       dispatch(searchWebinarsByKeyword(activeChild.level_id, searchText.trim()));
     }
   };
+  useEffect(() => {
+    dispatch(fetchFavorites()); // Charger les favoris lorsque l'écran est monté
+  }, []);
+
+  const handleToggleFavorite = async (webinarId) => {
+    const tokenChild = await AsyncStorage.getItem("tokenChild");
+    if (!tokenChild) {
+      console.log("❌ Aucun token d'enfant trouvé.");
+      return;
+    }
+
+    dispatch(toggleFavorite(webinarId)); // Appeler l'action toggleFavorite
+  };
 
   return (
     <View style={styles.container}>
@@ -121,58 +134,73 @@ const WebinarsScreen = () => {
             </>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.webinarContainer}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("WebinarDetail", { webinarId: item.id })}
-            >
-              <View style={styles.webinarCard}>
-                <Image
-                  source={{ uri: `https://www.abajim.com/${item.image_cover}` }}
-                  style={styles.webinarImage}
-                />
-                <View style={styles.webinarDetails}>
-                  <Text style={styles.webinarTitle}>{item.slug}</Text>
-
-                  <View style={styles.infoContainer}>
-                    {item.teacher?.avatar ? (
-                      <Image
-                        source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
-                        style={styles.teacherAvatar}
-                      />
-                    ) : (
-                      <View style={styles.initialsCircle}>
-                        <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
-                      </View>
-                    )}
+            <View style={styles.webinarContainer}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate("WebinarDetail", { webinarId: item.id })}
+              >
+                <View style={styles.webinarCard}>
+                  <Image
+                    source={{ uri: `https://www.abajim.com/${item.image_cover}` }}
+                    style={styles.webinarImage}
+                  />
+                  <View style={styles.webinarDetails}>
+                    <Text style={styles.webinarTitle}>{item.slug}</Text>
+          
+                    <View style={styles.infoContainer}>
+                      {item.teacher?.avatar ? (
+                        <Image
+                          source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
+                          style={styles.teacherAvatar}
+                        />
+                      ) : (
+                        <View style={styles.initialsCircle}>
+                          <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
+                      >
+                        <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
+                          {item.teacher?.full_name || "غير متوفر"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+          
+                    <View style={styles.infoContainer}>
+                      <Ionicons name="time-outline" size={18} color="#0097A7" />
+                      <Text style={styles.detailText}>
+                        {item.duration ? `${item.duration} دقيقة` : "غير متوفر"}
+                      </Text>
+                    </View>
+                    <View style={styles.infoContainer}>
+                      <Ionicons name="cash-outline" size={18} color="#0097A7" />
+                      <Text style={styles.detailText}>
+                        {item.price ? `${item.price} د.ت` : "مجاني"}
+                      </Text>
+                    </View>
+          
+                    <Text style={styles.webinarDescription} numberOfLines={2}>
+                      {item.description || "لا يوجد وصف متاح لهذا الدرس."}
+                    </Text>
+          
                     <TouchableOpacity
-                      onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
+                      style={styles.favoriteButton}
+                      onPress={() => dispatch(toggleFavorite(item.id))}
                     >
-                      <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}> 
-                        {item.teacher?.full_name || "غير متوفر"}
+                      <Ionicons
+                        name={item.isFavorite ? "heart" : "heart-outline"}
+                        size={22}
+                        color={item.isFavorite ? "red" : "#0097A7"}
+                      />
+                      <Text style={styles.favoriteText}>
+                        {item.isFavorite ? "إزالة من المفضلة" : "أضف إلى المفضلة"}
                       </Text>
                     </TouchableOpacity>
                   </View>
-
-                  <View style={styles.infoContainer}>
-                    <Ionicons name="time-outline" size={18} color="#0097A7" />
-                    <Text style={styles.detailText}>
-                      {item.duration ? `${item.duration} دقيقة` : "غير متوفر"}
-                    </Text>
-                  </View>
-                  <View style={styles.infoContainer}>
-                    <Ionicons name="cash-outline" size={18} color="#0097A7" />
-                    <Text style={styles.detailText}>
-                      {item.price ? `${item.price} د.ت` : "مجاني"}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.webinarDescription} numberOfLines={2}>
-                    {item.description || "لا يوجد وصف متاح لهذا الدرس."}
-                  </Text>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           )}
           ListEmptyComponent={
             <Text style={styles.noWebinarsText}>🚫 لا يوجد دروس فيديو متاحة لهذا المستوى</Text>
@@ -314,6 +342,17 @@ const styles = StyleSheet.create({
   loading: {
     marginTop: 20,
   },
+  favoriteButton: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  favoriteText: {
+    color: "#0097A7",
+    fontSize: 14,
+    marginRight: 6,
+  },
+  
 });
 
 export default WebinarsScreen;
