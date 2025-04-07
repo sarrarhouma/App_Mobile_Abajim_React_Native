@@ -17,6 +17,13 @@ const initialState = {
     notifications: [],
     manuals: [],
     videoCounts: {},
+    meeting: null,
+    meetings: [], 
+    loading: false, 
+    loadingMeetings: false,
+    reservations: [],
+    reservationSuccess: false,
+    updatedReservation: null,
 
 
 };
@@ -266,9 +273,66 @@ const authReducer = (state = initialState, action) => {
                 isFavorite: action.payload.includes(webinar.id),
                 })),
             };
-              
-              
+            case "FETCH_MEETINGS_REQUEST":
+            return { ...state, loadingMeetings: true };
+
+        case "FETCH_MEETINGS_SUCCESS":
+            return { ...state, meetings: action.payload, loadingMeetings: false };
+
+        case "FETCH_MEETINGS_FAILURE":
+            return { ...state, loadingMeetings: false, error: action.payload };
+        case "FETCH_RESERVATIONS_REQUEST":
+        case "UPDATE_RESERVATION_REQUEST":
+            return { ...state, isLoading: true, error: null };
+        
+        case "FETCH_RESERVATIONS_SUCCESS":
+            return { ...state, reservations: action.payload, isLoading: false };
+        
+        case "FETCH_RESERVATIONS_FAILURE":
+            return { ...state, error: action.payload, isLoading: false };
+        
+        case "UPDATE_RESERVATION_SUCCESS":
+            return { 
+                    ...state,
+                    updatedReservation: action.payload,
+                    isLoading: false,
+                    reservations: state.reservations.map(res => 
+                        res.id === action.payload.id ? action.payload : res
+                    )
+                };
                 
+        case "UPDATE_RESERVATION_FAILURE":
+            return { ...state, error: action.payload, isLoading: false };          
+        case "FETCH_MEETING_BY_ID_REQUEST":
+            return { ...state, loading: true, error: null };
+                
+            case "FETCH_MEETING_BY_ID_SUCCESS":
+                console.log("Reducer Meeting récupéré : ", action.payload); 
+                return { ...state, loading: false, meeting: action.payload };
+                
+        case "FETCH_MEETING_BY_ID_FAILURE":
+            return { ...state, loading: false, error: action.payload };              
+        case "RESERVE_MEETING_REQUEST":
+            return { 
+                ...state, 
+                loading: true, 
+                reservationSuccess: false, 
+                error: null 
+            };
+        case "RESERVE_MEETING_SUCCESS":
+            return { 
+                ...state, 
+                loading: false, 
+                reservationSuccess: true,
+                reservations: [...state.reservations, action.payload] 
+            };
+        case "RESERVE_MEETING_FAILURE":
+            return { 
+                ...state, 
+                loading: false, 
+                reservationSuccess: false, 
+                error: action.payload 
+            };
         default:
             return state;
     }

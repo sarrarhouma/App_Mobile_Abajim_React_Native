@@ -897,3 +897,216 @@ export const fetchFavorites = () => async (dispatch) => {
   }
 };
 
+
+// live Sessions = meetings 
+
+export const FETCH_MEETINGS_REQUEST = "FETCH_MEETINGS_REQUEST";
+export const FETCH_MEETINGS_SUCCESS = "FETCH_MEETINGS_SUCCESS";
+export const FETCH_MEETINGS_FAILURE = "FETCH_MEETINGS_FAILURE";
+
+export const FETCH_RESERVATIONS_REQUEST = "FETCH_RESERVATIONS_REQUEST";
+export const FETCH_RESERVATIONS_SUCCESS = "FETCH_RESERVATIONS_SUCCESS";
+export const FETCH_RESERVATIONS_FAILURE = "FETCH_RESERVATIONS_FAILURE";
+
+export const UPDATE_RESERVATION_REQUEST = "UPDATE_RESERVATION_REQUEST";
+export const UPDATE_RESERVATION_SUCCESS = "UPDATE_RESERVATION_SUCCESS";
+export const UPDATE_RESERVATION_FAILURE = "UPDATE_RESERVATION_FAILURE";
+
+// 🔹 Fetch All Meetings
+export const fetchMeetings = () => async (dispatch) => {
+  dispatch({ type: FETCH_MEETINGS_REQUEST });
+
+  try {
+    const response = await fetch(`${API_URL}/meetings`);
+    const data = await response.json();
+
+    if (response.ok) {
+      dispatch({ type: FETCH_MEETINGS_SUCCESS, payload: data });
+    } else {
+      dispatch({ type: FETCH_MEETINGS_FAILURE, payload: data.error });
+    }
+  } catch (error) {
+    dispatch({ type: FETCH_MEETINGS_FAILURE, payload: error.message });
+  }
+};
+// 🔹 Fetch Meetings by Level ID
+export const fetchMeetingsByLevel = (levelId) => async (dispatch) => {
+  dispatch({ type: FETCH_MEETINGS_REQUEST });
+
+  try {
+    const tokenChild = await AsyncStorage.getItem("tokenChild");  // 🔥 Utilisation du token de l'enfant
+    if (!tokenChild) throw new Error("Token d'enfant manquant !");
+
+    const response = await fetch(`${API_URL}/meetings/level/${levelId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${tokenChild}`,  // ✅ Utilisation du token d'enfant ici
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("✅ Meetings récupérés avec succès : ", data);
+      dispatch({ type: FETCH_MEETINGS_SUCCESS, payload: data });
+    } else {
+      console.error("❌ Erreur API meetings : ", data.message);
+      dispatch({ type: FETCH_MEETINGS_FAILURE, payload: data.message || "Erreur lors de la récupération des meetings" });
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération des meetings : ", error.message);
+    dispatch({ type: FETCH_MEETINGS_FAILURE, payload: error.message });
+  }
+};
+
+// 🔹 Fetch Reservations by User ID
+export const fetchReservationsByUserId = (userId) => async (dispatch) => {
+  dispatch({ type: FETCH_RESERVATIONS_REQUEST });
+
+  try {
+      const token = await AsyncStorage.getItem("childToken");
+      const response = await fetch(`${API_URL}/meetings/reservations/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+          dispatch({ type: FETCH_RESERVATIONS_SUCCESS, payload: data });
+      } else {
+          dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: data.error });
+      }
+  } catch (error) {
+      dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: error.message });
+  }
+};
+
+
+
+// 🔹 Update Reservation
+export const updateReservation = (reservationId, updateData) => async (dispatch) => {
+    dispatch({ type: UPDATE_RESERVATION_REQUEST });
+
+    try {
+        const token = await AsyncStorage.getItem("token");
+        const response = await fetch(`${API_URL}/meetings/reservations/${reservationId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(updateData),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            dispatch({ type: UPDATE_RESERVATION_SUCCESS, payload: data });
+        } else {
+            dispatch({ type: UPDATE_RESERVATION_FAILURE, payload: data.error });
+        }
+    } catch (error) {
+        dispatch({ type: UPDATE_RESERVATION_FAILURE, payload: error.message });
+    }
+};
+export const FETCH_MEETING_BY_ID_REQUEST = "FETCH_MEETING_BY_ID_REQUEST";
+export const FETCH_MEETING_BY_ID_SUCCESS = "FETCH_MEETING_BY_ID_SUCCESS";
+export const FETCH_MEETING_BY_ID_FAILURE = "FETCH_MEETING_BY_ID_FAILURE";
+
+export const fetchMeetingById = (meetingId) => async (dispatch) => {
+  dispatch({ type: FETCH_MEETING_BY_ID_REQUEST });
+
+  try {
+    const response = await fetch(`${API_URL}/meetings/${meetingId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("✅ Meeting récupéré avec succès : ", data);
+      
+      // ✅ On prend le premier élément du tableau reçu
+      dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data[0] }); 
+      
+    } else {
+      dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: data.message });
+    }
+  } catch (error) {
+    dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: error.message });
+  }
+};
+
+export const RESERVE_MEETING_REQUEST = 'RESERVE_MEETING_REQUEST';
+export const RESERVE_MEETING_SUCCESS = 'RESERVE_MEETING_SUCCESS';
+export const RESERVE_MEETING_FAILURE = 'RESERVE_MEETING_FAILURE';
+
+// Réserver un meeting
+export const reserveMeeting = (meetingData) => async (dispatch) => {
+  console.log("🔍 [Action] - Tentative de réservation du meeting...");
+  console.log("📦 [Payload envoyé] :", meetingData); 
+
+  dispatch({ type: RESERVE_MEETING_REQUEST });
+
+  try {
+      // Ensure we are correctly fetching `tokenChild` and `childId` from AsyncStorage
+      const token = await AsyncStorage.getItem("tokenChild");
+      const userId = await AsyncStorage.getItem("tokenChild");  // Make sure to use `activeChildId` correctly
+
+      console.log("🔑 [Token récupéré] :", token);
+      console.log("👤 [Child ID récupéré] :", userId);
+
+      // Check if both token and userId are retrieved successfully
+      if (!token) {  
+          console.log("🚨 [Erreur] - Aucun `childId` ou `tokenChild` trouvé");
+          Alert.alert("Erreur", "Aucun utilisateur trouvé.");
+          dispatch({ type: RESERVE_MEETING_FAILURE, payload: "Aucun utilisateur trouvé." });
+          return;
+      }
+
+      const dataToSend = {
+          meeting_id: meetingData.meeting_id,
+          sale_id: meetingData.sale_id,
+          user_id: parseInt(userId),  // Make sure userId is correctly passed
+          meeting_time_id: meetingData.meeting_time_id,
+          day: meetingData.day,
+          date: meetingData.date,
+          start_at: meetingData.start_at,
+          end_at: meetingData.end_at,
+          student_count: 1,
+          paid_amount: meetingData.paid_amount,
+          meeting_type: meetingData.meeting_type,
+          discount: meetingData.discount,
+          link: "",
+          password: "",
+          description: "Réservation depuis l'application",
+          status: "reserved",
+          created_at: new Date().toISOString(),
+          locked_at: null,
+          reserved_at: new Date().toISOString()
+      };
+
+      console.log("📦 [Données envoyées au serveur] :", dataToSend);
+
+      const response = await fetch(`${API_URL}/meetings/reserve`, {
+          method: 'POST',
+          headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`  // Correct token usage
+          },
+          body: JSON.stringify(dataToSend)
+      });
+
+      const data = await response.json();
+      console.log("📥 [Réponse du serveur] :", data);
+
+      if (response.ok) {
+          console.log("✅ [Succès] Réservation réussie !");
+          dispatch({ type: RESERVE_MEETING_SUCCESS, payload: data });
+      } else {
+          console.log("❌ [Erreur Serveur] :", data.message);
+          dispatch({ type: RESERVE_MEETING_FAILURE, payload: data.message });
+      }
+  } catch (error) {
+      console.log("🚨 [Erreur Fetch] :", error.message);
+      dispatch({ type: RESERVE_MEETING_FAILURE, payload: error.message });
+  }
+};

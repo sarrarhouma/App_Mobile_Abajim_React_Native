@@ -83,7 +83,7 @@ const SettingsScreen = () => {
               </View>
             )}
           </TouchableOpacity>
-          <Text style={styles.name}>{isLoading ? "جار التحميل..." : parentInfo?.full_name || "المستخدم"}</Text>
+          <Text style={styles.name}>{ parentInfo?.full_name || "المستخدم"}</Text>
         </View>
 
         {/* ✅ Switch enfants avec titre */}
@@ -103,14 +103,19 @@ const SettingsScreen = () => {
           <Ionicons name="people-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
        
-        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Notifications")}>
-          <Text style={styles.optionText}>إشعارات</Text>
-          <Ionicons name="notifications-outline" size={24} color="#1F3B64" />
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Favorites")}>
           <Text style={styles.optionText}>دروسي الإضافية المفضلة</Text>
           <Ionicons name="heart-outline" size={24} color="#1F3B64" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("ReservedMeetings")}>
+          <Text style={styles.optionText}>حصصي المباشرة المحجوزة</Text>
+          <Ionicons name="videocam-outline" size={24} color="#1F3B64" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Notifications")}>
+          <Text style={styles.optionText}>إشعارات</Text>
+          <Ionicons name="notifications-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("MyCard")}>

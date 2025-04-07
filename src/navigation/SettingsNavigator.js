@@ -10,6 +10,7 @@ import VerificationScreen from "../screens/VerificationScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen"; 
 import SignInScreen from "../screens/SignInScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
+import ReservedMeetingsScreen from "../screens/ReservedMeetingsScreen";
 
 const Stack = createStackNavigator();
 
@@ -26,6 +27,7 @@ const SettingsNavigator = () => {
       <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} /> 
+      <Stack.Screen name="ReservedMeetings" component={ReservedMeetingsScreen} /> 
     </Stack.Navigator>
   );
 };
