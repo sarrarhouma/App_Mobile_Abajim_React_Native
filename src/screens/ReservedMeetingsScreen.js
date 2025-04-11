@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ const ReservedMeetingsScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const { reservations, loadingReservations } = useSelector((state) => state.auth);
+  const [expandedItems, setExpandedItems] = useState({});
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -48,69 +49,107 @@ const ReservedMeetingsScreen = () => {
     fetchReservations();
   }, [dispatch]);
 
-  const renderReservation = ({ item }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => navigation.navigate("MeetingsDetails", { meetingId: item.meeting.id })}
-      style={styles.webinarCard}
-    >
-      <View style={styles.row}>
-      {item.meeting.times[0]?.material && (
-            <View style={[styles.badge, { backgroundColor: getBadgeColor(item.meeting.times[0].material.name) }]}>
-              <Text style={styles.badgeText}>{item.meeting.times[0].material.name}</Text>
+  // Filter out invalid reservations (those with meeting: null)
+  const validReservations = reservations ? reservations.filter(item => item && item.meeting) : [];
+
+  const toggleExpand = (id) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const renderReservation = ({ item }) => {
+    // Ensure times is at least an empty array
+    const times = item.meeting.times || [];
+    const isExpanded = expandedItems[item.id] || false;
+
+    return (
+      <View style={styles.webinarCard}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate("MeetingsDetails", { 
+            meetingId: item.meeting.id,
+            isReserved: true,
+            reservationId: item.id
+          })}
+          style={styles.cardContent}
+        >
+          <View style={styles.row}>
+            {times.length > 0 && times[0]?.material && (
+              <View style={[styles.badge, { backgroundColor: getBadgeColor(times[0].material.name) }]}>
+                <Text style={styles.badgeText}>{times[0].material.name}</Text>
+              </View>
+            )}
+            <View style={styles.avatarWrapper}>
+              {item.meeting.teacher?.avatar ? (
+                <Image
+                  source={{ uri: `https://www.abajim.com/${item.meeting.teacher.avatar}` }}
+                  style={styles.teacherAvatar}
+                />
+              ) : (
+                <View style={styles.initialsCircle}>
+                  <Text style={styles.initialsText}>{getInitials(item.meeting.teacher?.full_name)}</Text>
+                </View>
+              )}
             </View>
-          )}
-        <View style={styles.avatarWrapper}>
-          {item.meeting.teacher?.avatar ? (
-            <Image
-              source={{ uri: `https://www.abajim.com/${item.meeting.teacher.avatar}` }}
-              style={styles.teacherAvatar}
-            />
-          ) : (
-            <View style={styles.initialsCircle}>
-              <Text style={styles.initialsText}>{getInitials(item.meeting.teacher?.full_name)}</Text>
+
+            <View style={styles.teacherInfo}>
+              <Text style={styles.teacherName}>{item.meeting.teacher?.full_name || "غير متوفر"}</Text>
             </View>
-          )}
-        </View>
-
-        <View style={styles.teacherInfo}>
-          <Text style={styles.teacherName}>{item.meeting.teacher?.full_name || "غير متوفر"}</Text>
-         
-        </View>
-      </View>
-
-      <View style={styles.sessionHeader}>
-        <Ionicons name="calendar" size={20} color="#0097A7" />
-        <Text style={styles.webinarTitle}>
-          {item.meeting.group_meeting ? "لقاء جماعي" : "لقاء فردي"} - عدد الجلسات: {item.meeting.times.length}
-        </Text>
-      </View>
-
-      <View style={styles.detailsRow}>
-        <Ionicons name="cash-outline" size={20} color="#4CAF50" />
-        <Text style={styles.detailText}>السعر: {item.meeting.amount} د.ت</Text>
-      </View>
-
-      <View style={styles.detailsRow}>
-        <Ionicons name="pricetag-outline" size={20} color="#FF9800" />
-        <Text style={styles.detailText}>
-          التخفيض: {item.meeting.discount ? `${item.meeting.discount}%` : "لا يوجد"}
-        </Text>
-      </View>
-
-      <ScrollView>
-        {item.meeting.times.map((time, index) => (
-          <View key={index} style={styles.sessionDetails}>
-            <Text style={styles.detailText}>اليوم : {time.day_label}</Text>
-            <Text style={styles.detailText}>المادة الفرعية : {time.submaterial?.name || "غير متوفر"}</Text>
-            <Text style={styles.detailText}>التاريخ : {new Date(time.meet_date * 1000).toLocaleDateString()}</Text>
-            <Text style={styles.detailText}>من : {new Date(time.start_time * 1000).toLocaleTimeString()}</Text>
-            <Text style={styles.detailText}>إلى : {new Date(time.end_time * 1000).toLocaleTimeString()}</Text>
           </View>
-        ))}
-      </ScrollView>
-    </TouchableOpacity>
-  );
+
+          <View style={styles.sessionHeader}>
+            <Ionicons name="calendar" size={20} color="#0097A7" />
+            <Text style={styles.webinarTitle}>
+              {item.meeting.group_meeting ? "لقاء جماعي" : "لقاء فردي"} - عدد الجلسات: {times.length}
+            </Text>
+          </View>
+
+          <View style={styles.detailsRow}>
+            <Ionicons name="cash-outline" size={20} color="#4CAF50" />
+            <Text style={styles.detailText}>السعر: {item.meeting.amount || 0} د.ت</Text>
+          </View>
+
+          <View style={styles.detailsRow}>
+            <Ionicons name="pricetag-outline" size={20} color="#FF9800" />
+            <Text style={styles.detailText}>
+              التخفيض: {item.meeting.discount ? `${item.meeting.discount}%` : "لا يوجد"}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.accordionHeader} 
+          onPress={() => toggleExpand(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.accordionTitle}>
+            📋 تفاصيل الجلسات ({times.length})
+          </Text>
+          <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={24} color="#0097A7" />
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <View style={styles.sessionContainer}>
+            {times.length > 0 ? (
+              times.map((time, index) => (
+                <View key={index} style={styles.sessionCard}>
+                  <Text style={styles.sessionText}>اليوم : {time.day_label || "غير متوفر"}</Text>
+                  <Text style={styles.sessionText}>المادة الفرعية : {time.submaterial?.name || "غير متوفر"}</Text>
+                  <Text style={styles.sessionText}>التاريخ : {time.meet_date ? new Date(time.meet_date * 1000).toLocaleDateString() : "غير متوفر"}</Text>
+                  <Text style={styles.sessionText}>من : {time.start_time ? new Date(time.start_time * 1000).toLocaleTimeString() : "غير متوفر"}</Text>
+                  <Text style={styles.sessionText}>إلى : {time.end_time ? new Date(time.end_time * 1000).toLocaleTimeString() : "غير متوفر"}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.detailText}>لا توجد جلسات متاحة لهذا الاجتماع.</Text>
+            )}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -123,13 +162,17 @@ const ReservedMeetingsScreen = () => {
 
       {loadingReservations ? (
         <ActivityIndicator size="large" color="#0097A7" style={styles.loading} />
-      ) : (
+      ) : validReservations.length > 0 ? (
         <FlatList
-          data={reservations}
+          data={validReservations}
           renderItem={renderReservation}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => (item && item.id ? item.id.toString() : Math.random().toString())}
           contentContainerStyle={styles.webinarsList}
         />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>لا توجد حصص محجوزة</Text>
+        </View>
       )}
       <BottomNavigation />
     </View>
@@ -161,11 +204,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
+  cardContent: {
+    // This is a wrapper for the clickable part of the card
+  },
   row: {
     flexDirection: "column",
     alignItems: "center",
     marginBottom: 20,
-},
+  },
   avatarWrapper: {
     marginLeft: 10,
   },
@@ -178,8 +224,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-},
-initialsCircle: {
+  },
+  initialsCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -187,22 +233,22 @@ initialsCircle: {
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
-},
-initialsText: { 
+  },
+  initialsText: { 
     color: "#FFF", 
     fontSize: 30, 
     fontWeight: "bold" 
-},
+  },
   teacherInfo: { 
     alignItems: "center",
     marginBottom: 15,
-},
-teacherName: { 
+  },
+  teacherName: { 
     fontSize: 18, 
     fontWeight: "bold", 
     color: "#0097A7",
     textAlign: "center",
-},
+  },
   badge: {
     paddingVertical: 6,
     paddingHorizontal: 16,
@@ -222,7 +268,6 @@ teacherName: {
     shadowOffset: { width: 2, height: 2 },
     borderWidth: 1,
     borderColor: "#FFD700", // Bordure dorée pour un effet premium
-    backgroundImage: 'linear-gradient(45deg, #FF9800, #FFD700)', // Effet dégradé
   },
   badgeText: { 
     color: "#FFF", 
@@ -256,14 +301,59 @@ teacherName: {
     alignItems: "center",
     marginBottom: 10,
   },
-  sessionDetails: {
-    backgroundColor: "#F5F5F5",
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
+  accordionHeader: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 15,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+  },
+  accordionTitle: { 
+    textAlign: "right", 
+    fontSize: 16, 
+    fontWeight: "bold", 
+    color: "#1f3b64" 
+  },
+  sessionContainer: { 
+    marginTop: 10 
+  },
+  sessionCard: { 
+    backgroundColor: "#E0F7FA", 
+    padding: 10, 
+    borderRadius: 15, 
+    marginBottom: 10,
     borderLeftWidth: 5,
     borderLeftColor: "#0097A7",
   },
+  sessionText: { 
+    fontSize: 14, 
+    color: "#333", 
+    textAlign: "right",
+    marginBottom: 5
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    padding: 10,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#555",
+    textAlign: "center",
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
 
-export default ReservedMeetingsScreen;
+export default ReservedMeetingsScreen; 

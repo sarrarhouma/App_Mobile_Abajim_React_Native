@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://27ef-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://f124-41-226-8-251.ngrok-free.app/api'; 
 import { Alert } from "react-native";
-
+import jwt_decode from "jwt-decode"
 
 export const FETCH_CORRECTION_VIDEO_REQUEST = "FETCH_CORRECTION_VIDEO_REQUEST";
 export const FETCH_CORRECTION_VIDEO_SUCCESS = "FETCH_CORRECTION_VIDEO_SUCCESS";
@@ -128,7 +128,6 @@ export const login = (mobile, password, navigation) => {
       });
 
       const childrenData = await childrenResponse.json();
-      console.log("✅ Enfants récupérés après connexion:", childrenData);
 
       dispatch({
         type: "FETCH_CHILDREN_SUCCESS",
@@ -272,7 +271,7 @@ export const resetPassword = (mobile, newPassword, navigation) => async (dispatc
             let childrenData = await AsyncStorage.getItem("children");
             let children = childrenData ? JSON.parse(childrenData) : [];
 
-            console.log("✅ Children loaded from AsyncStorage:", children);
+         //   console.log("✅ Children loaded from AsyncStorage:", children);
 
             if (!Array.isArray(children) || children.length === 0) {
                 console.warn("⚠️ No children found in AsyncStorage, fetching from API...");
@@ -948,7 +947,6 @@ export const fetchMeetingsByLevel = (levelId) => async (dispatch) => {
     const data = await response.json();
 
     if (response.ok) {
-      console.log("✅ Meetings récupérés avec succès : ", data);
       dispatch({ type: FETCH_MEETINGS_SUCCESS, payload: data });
     } else {
       console.error("❌ Erreur API meetings : ", data.message);
@@ -966,7 +964,7 @@ export const fetchReservationsByUserId = (userId) => async (dispatch) => {
 
   try {
       const token = await AsyncStorage.getItem("childToken");
-      const response = await fetch(`${API_URL}/meetings/reservations/user/${userId}`, {
+      const response = await fetch(`${API_URL}/meetings/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -990,7 +988,7 @@ export const updateReservation = (reservationId, updateData) => async (dispatch)
 
     try {
         const token = await AsyncStorage.getItem("token");
-        const response = await fetch(`${API_URL}/meetings/reservations/${reservationId}`, {
+        const response = await fetch(`${API_URL}/meetings/reserve/${reservationId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -1018,95 +1016,174 @@ export const fetchMeetingById = (meetingId) => async (dispatch) => {
   dispatch({ type: FETCH_MEETING_BY_ID_REQUEST });
 
   try {
+    console.log(`🔍 Fetching meeting with ID: ${meetingId}`);
+    
     const response = await fetch(`${API_URL}/meetings/${meetingId}`);
     const data = await response.json();
 
+    console.log("📥 API Response:", data);
+
     if (response.ok) {
-      console.log("✅ Meeting récupéré avec succès : ", data);
-      
-      // ✅ On prend le premier élément du tableau reçu
-      dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data[0] }); 
-      
+      // Check if data is an array and has at least one element
+      if (Array.isArray(data) && data.length > 0) {
+        console.log("✅ Meeting data found:", data[0]);
+        dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data[0] });
+      } else if (typeof data === 'object' && data !== null) {
+        // If data is a single object
+        console.log("✅ Meeting data found:", data);
+        dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data });
+      } else {
+        console.error("❌ No meeting data found in response");
+        dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: "No meeting data found" });
+      }
     } else {
-      dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: data.message });
+      console.error("❌ API Error:", data.message || "Failed to fetch meeting");
+      dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: data.message || "Failed to fetch meeting" });
     }
   } catch (error) {
+    console.error("❌ Error fetching meeting:", error.message);
     dispatch({ type: FETCH_MEETING_BY_ID_FAILURE, payload: error.message });
   }
-};
+}; 
 
 export const RESERVE_MEETING_REQUEST = 'RESERVE_MEETING_REQUEST';
 export const RESERVE_MEETING_SUCCESS = 'RESERVE_MEETING_SUCCESS';
 export const RESERVE_MEETING_FAILURE = 'RESERVE_MEETING_FAILURE';
 
 // Réserver un meeting
-export const reserveMeeting = (meetingData) => async (dispatch) => {
-  console.log("🔍 [Action] - Tentative de réservation du meeting...");
-  console.log("📦 [Payload envoyé] :", meetingData); 
-
-  dispatch({ type: RESERVE_MEETING_REQUEST });
+export const reserveMeeting = (meetingData, token) => async (dispatch) => {
+  dispatch({ type: "RESERVE_MEETING_REQUEST" });
 
   try {
-      // Ensure we are correctly fetching `tokenChild` and `childId` from AsyncStorage
-      const token = await AsyncStorage.getItem("tokenChild");
-      const userId = await AsyncStorage.getItem("tokenChild");  // Make sure to use `activeChildId` correctly
-
-      console.log("🔑 [Token récupéré] :", token);
-      console.log("👤 [Child ID récupéré] :", userId);
-
-      // Check if both token and userId are retrieved successfully
-      if (!token) {  
-          console.log("🚨 [Erreur] - Aucun `childId` ou `tokenChild` trouvé");
-          Alert.alert("Erreur", "Aucun utilisateur trouvé.");
-          dispatch({ type: RESERVE_MEETING_FAILURE, payload: "Aucun utilisateur trouvé." });
-          return;
-      }
-
-      const dataToSend = {
-          meeting_id: meetingData.meeting_id,
-          sale_id: meetingData.sale_id,
-          user_id: parseInt(userId),  // Make sure userId is correctly passed
-          meeting_time_id: meetingData.meeting_time_id,
-          day: meetingData.day,
-          date: meetingData.date,
-          start_at: meetingData.start_at,
-          end_at: meetingData.end_at,
-          student_count: 1,
-          paid_amount: meetingData.paid_amount,
-          meeting_type: meetingData.meeting_type,
-          discount: meetingData.discount,
-          link: "",
-          password: "",
-          description: "Réservation depuis l'application",
-          status: "reserved",
-          created_at: new Date().toISOString(),
-          locked_at: null,
-          reserved_at: new Date().toISOString()
+      // 🔍 Adding sale_id if it exists in the meetingData
+      const meetingDataWithSale = {
+          ...meetingData,
+          sale_id: meetingData.sale_id || meetingData.meeting_id  // Use sale_id if available, otherwise fallback to meeting_id
       };
-
-      console.log("📦 [Données envoyées au serveur] :", dataToSend);
+      
+      console.log("📦 [Payload envoyé au backend pour la réservation] :", JSON.stringify(meetingDataWithSale, null, 2));
 
       const response = await fetch(`${API_URL}/meetings/reserve`, {
           method: 'POST',
           headers: { 
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`  // Correct token usage
+              'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(dataToSend)
+          body: JSON.stringify(meetingDataWithSale)
       });
 
       const data = await response.json();
-      console.log("📥 [Réponse du serveur] :", data);
+      console.log("📥 [Réponse du serveur - Réservation] :", JSON.stringify(data, null, 2));
 
       if (response.ok) {
-          console.log("✅ [Succès] Réservation réussie !");
-          dispatch({ type: RESERVE_MEETING_SUCCESS, payload: data });
+          dispatch({ 
+              type: "RESERVE_MEETING_SUCCESS", 
+              payload: data 
+          });
+
+          // ✅ Reset reservationSuccess flag after a short delay (to avoid infinite alerts)
+          setTimeout(() => {
+              dispatch({ type: "RESET_RESERVATION_SUCCESS" });
+          }, 1000);
       } else {
-          console.log("❌ [Erreur Serveur] :", data.message);
-          dispatch({ type: RESERVE_MEETING_FAILURE, payload: data.message });
+          // If the first attempt fails, try without sale_id
+          if (data.message && (data.message.includes("sale_id") || data.message.includes("Vente non trouvée"))) {
+              console.log("⚠️ [Avertissement] - Erreur liée au sale_id, tentative de réservation sans sale_id");
+              
+              // Try again without sale_id
+              const retryPayload = { ...meetingData };
+              
+              console.log("🔄 [Nouvelle tentative] - Sans sale_id:", JSON.stringify(retryPayload, null, 2));
+              
+              const retryResponse = await fetch(`${API_URL}/meetings/reserve`, {
+                  method: 'POST',
+                  headers: { 
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify(retryPayload)
+              });
+              
+              const retryData = await retryResponse.json();
+              console.log("📥 [Réponse du serveur (2ème tentative)] :", JSON.stringify(retryData, null, 2));
+              
+              if (retryResponse.ok) {
+                  dispatch({ 
+                      type: "RESERVE_MEETING_SUCCESS", 
+                      payload: retryData 
+                  });
+
+                  // ✅ Reset reservationSuccess flag after a short delay
+                  setTimeout(() => {
+                      dispatch({ type: "RESET_RESERVATION_SUCCESS" });
+                  }, 1000);
+              } else {
+                  const errorMessage = retryData.message || retryData.error || "Erreur inconnue";
+                  console.log("❌ [Erreur Serveur - Réservation] :", errorMessage);
+                  dispatch({ 
+                      type: "RESERVE_MEETING_FAILURE", 
+                      payload: errorMessage 
+                  });
+              }
+          } else {
+              const errorMessage = data.message || data.error || "Erreur inconnue";
+              console.log("❌ [Erreur Serveur - Réservation] :", errorMessage);
+              dispatch({ 
+                  type: "RESERVE_MEETING_FAILURE", 
+                  payload: errorMessage 
+              });
+          }
       }
   } catch (error) {
-      console.log("🚨 [Erreur Fetch] :", error.message);
-      dispatch({ type: RESERVE_MEETING_FAILURE, payload: error.message });
+      console.log("🚨 [Erreur Fetch - Réservation] :", error.message);
+      dispatch({ 
+          type: "RESERVE_MEETING_FAILURE", 
+          payload: error.message || "Erreur de connexion au serveur" 
+      });
   }
 };
+
+export const CANCEL_RESERVATION_REQUEST = "CANCEL_RESERVATION_REQUEST";
+export const CANCEL_RESERVATION_SUCCESS = "CANCEL_RESERVATION_SUCCESS";
+export const CANCEL_RESERVATION_FAILURE = "CANCEL_RESERVATION_FAILURE";
+//cancel meeting
+export const cancelReservation = (reservationId) => async (dispatch) => {
+  dispatch({ type: CANCEL_RESERVATION_REQUEST });
+  
+  try {
+      const token = await AsyncStorage.getItem('tokenChild');
+      if (!token) {
+          throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_URL}/meetings/cancel/${reservationId}`, {
+          method: 'DELETE',
+          headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+          }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+          throw new Error(data.message || 'Failed to cancel reservation');
+      }
+
+      // Make sure we include the meeting_id in the payload
+      const payload = {
+          ...data,
+          // Only try to split reservationId if it exists and is a string
+          meeting_id: data.meeting_id || (typeof reservationId === 'string' ? reservationId.split('_')[0] : null)
+      };
+
+      dispatch({ type: CANCEL_RESERVATION_SUCCESS, payload });
+      
+      // Refresh the meetings list to ensure it's up to date
+      if (data.level_id) {
+          dispatch(fetchMeetingsByLevel(data.level_id));
+      }
+  } catch (error) {
+      dispatch({ type: CANCEL_RESERVATION_FAILURE, payload: error.message });
+  }
+}; 

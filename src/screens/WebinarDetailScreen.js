@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
 
   scrollContent: { paddingVertical: 20 },
 
-  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 15 },
+  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 5,    marginTop: 20, },
   chapterHeader: {
     flexDirection: "row", justifyContent: "space-between",
     backgroundColor: "#E0E0E0", padding: 15, borderRadius: 10

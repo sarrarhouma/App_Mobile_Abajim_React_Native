@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from "react";
+import React, { useEffect,useState, useCallback  } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect  } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMeetingsByLevel } from "../reducers/auth/AuthAction";
@@ -49,7 +49,12 @@ const LiveSessionsScreen = () => {
       dispatch(fetchMeetingsByLevel(activeChild.level_id));
     }
   }, [activeChild, dispatch]);
-
+  useFocusEffect(
+    useCallback(() => {
+        // Reset the flag whenever this screen is focused
+        dispatch({ type: "RESET_RESERVATION_SUCCESS" });
+    }, [dispatch])
+);
   return (
     <View style={styles.container}>
       {loadingMeetings ? (

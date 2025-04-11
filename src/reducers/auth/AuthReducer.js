@@ -24,6 +24,12 @@ const initialState = {
     reservations: [],
     reservationSuccess: false,
     updatedReservation: null,
+    reservationError: null,
+    cancelLoading: false,
+    cancelError: null,
+    cancelSuccess: false,
+    sale: null,
+    saleError: null
 
 
 };
@@ -321,10 +327,15 @@ const authReducer = (state = initialState, action) => {
             };
         case "RESERVE_MEETING_SUCCESS":
             return { 
-                ...state, 
-                loading: false, 
-                reservationSuccess: true,
-                reservations: [...state.reservations, action.payload] 
+                    ...state, 
+                    loading: false, 
+                    reservationSuccess: true,
+                    reservations: [...state.reservations, action.payload] 
+            };
+        case "RESET_RESERVATION_SUCCESS": // Add this case to reset the flag
+            return { 
+                    ...state, 
+                    reservationSuccess: false 
             };
         case "RESERVE_MEETING_FAILURE":
             return { 
@@ -333,6 +344,42 @@ const authReducer = (state = initialState, action) => {
                 reservationSuccess: false, 
                 error: action.payload 
             };
+        case "CANCEL_RESERVATION_REQUEST":
+            return {
+                    ...state,
+                    cancelLoading: true,
+                    cancelError: null,
+                    cancelSuccess: false
+                };
+            case "CANCEL_RESERVATION_SUCCESS":
+                return {
+                        ...state,
+                        cancelLoading: false,
+                        cancelSuccess: true,
+                        currentMeeting: state.currentMeeting ? {
+                            ...state.currentMeeting,
+                            isReserved: false,
+                            reservationId: null,
+                            status: "available"
+                        } : null,
+                        meetings: state.meetings.map(meeting => 
+                            meeting.id === action.payload.meeting_id 
+                                ? { 
+                                    ...meeting, 
+                                    isReserved: false, 
+                                    reservationId: null,
+                                    status: "available"
+                                } 
+                                : meeting
+                        )
+                };
+        case "CANCEL_RESERVATION_FAILURE":
+            return {
+                    ...state,
+                    cancelLoading: false,
+                    cancelError: action.payload,
+                    cancelSuccess: false
+                };
         default:
             return state;
     }
