@@ -7,23 +7,18 @@ const VideoPlayerWithOrientation = ({ uri }) => {
   const videoRef = useRef(null);
 
   const handlePlaybackStatusUpdate = async (status) => {
-    console.log("🎬 Playback status:", status);
 
     if (status.isPlaying) {
-      console.log("▶️ Video is playing, switching to LANDSCAPE...");
       try {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
       } catch (error) {
-        console.log("❌ Failed to switch to LANDSCAPE:", error);
       }
     }
 
     if (status.didJustFinish || status.positionMillis === 0) {
-      console.log("⏹ Video stopped/finished, switching to PORTRAIT...");
       try {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
       } catch (error) {
-        console.log("❌ Failed to switch to PORTRAIT:", error);
       }
     }
   };

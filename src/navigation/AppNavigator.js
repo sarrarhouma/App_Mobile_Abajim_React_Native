@@ -20,9 +20,12 @@ import SettingsNavigator from "../navigation/SettingsNavigator";
 import WebinarDetail from "../screens/WebinarDetailScreen";
 import TeacherScreen from "../screens/TeacherScreen";
 import MeetingsDetailsScreen from '../screens/MeetingsDetailsScreen';
+import SubscriptionScreen from '../screens/SubscriptionScreen';
+import CartScreen from '../screens/CartScreen';
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
-
+// 🟦 Smart UI Entry for Subscription
+import SmartSubscriptionEntry from "../components/SmartSubscriptionEntry";
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -78,6 +81,8 @@ const AppNavigator = () => {
             <Stack.Screen name="LiveSession" component={LiveSessionScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Teacher" component={TeacherScreen} options={{ headerShown: false }} />
             <Stack.Screen name="MeetingsDetails" component={MeetingsDetailsScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

@@ -11,10 +11,14 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword, toggleFavorite , fetchFavorites} from "../reducers/auth/AuthAction";
+import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword, toggleFavorite , fetchFavorites,  addToCart,
+  removeFromCart,
+  fetchCart,} from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
-import ChildSwitcher from "../components/ChildSwitcher";
+import CartIcon from "../components/CartIcon";
+import NotificationIcon from "../components/NotificationIcon";
+import FavoriteIcon from "../components/FavoriteIcon";
 
 const getInitials = (fullName) => {
   if (!fullName) return "؟";
@@ -30,7 +34,7 @@ const WebinarsScreen = () => {
 
   const children = useSelector((state) => state.auth.children);
   const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
-  const { webinars, loading } = useSelector((state) => state.auth);
+  const { webinars, loading , cartItems} = useSelector((state) => state.auth);
   const [searchText, setSearchText] = useState("");
 
   useLayoutEffect(() => {
@@ -70,19 +74,22 @@ const WebinarsScreen = () => {
     }
   };
   useEffect(() => {
-    dispatch(fetchFavorites()); // Charger les favoris lorsque l'écran est monté
-  }, []);
+    dispatch(fetchCart());
+    dispatch(fetchFavorites());
+  }, [activeChild, dispatch]);
 
   const handleToggleFavorite = async (webinarId) => {
     const tokenChild = await AsyncStorage.getItem("tokenChild");
     if (!tokenChild) {
-      console.log("❌ Aucun token d'enfant trouvé.");
       return;
     }
 
     dispatch(toggleFavorite(webinarId)); // Appeler l'action toggleFavorite
   };
-
+  const isInCart = (webinarId) => {
+    return cartItems?.some((item) => item.webinar_id === webinarId);
+  };
+  
   return (
     <View style={styles.container}>
       {loading ? (
@@ -99,12 +106,9 @@ const WebinarsScreen = () => {
                 <View style={styles.headerBottom}>
                   <Text style={styles.title}> الدروس الإضافية</Text>
                   <View style={styles.headerIcons}>
-                    <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-                      <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
-                    </TouchableOpacity>
-                    <TouchableOpacity>
-                      <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-                    </TouchableOpacity>
+                  <NotificationIcon onPress={() => navigation.navigate("Settings", { screen: "Notifications" })} />
+                    <FavoriteIcon onPress={() =>  navigation.navigate("Settings", { screen: "Favorites" })} />                     
+                    <CartIcon onPress={() => navigation.navigate("CartScreen")} />
                   </View>
                 </View>
               </View>
@@ -197,6 +201,29 @@ const WebinarsScreen = () => {
                         {item.isFavorite ? "إزالة من المفضلة" : "أضف إلى المفضلة"}
                       </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.cartButton,
+                        {
+                          backgroundColor: isInCart(item.id) ? "#818894" : "#1f3b64",
+                        },
+                      ]}
+                      onPress={() => {
+                        const itemInCart = cartItems?.find((i) => i.webinar_id === item.id);
+                        if (itemInCart) {
+                          dispatch(removeFromCart(itemInCart.id)).then(() => dispatch(fetchCart()));
+                        } else {
+                          dispatch(addToCart({ webinar_id: item.id })).then(() => dispatch(fetchCart()));
+                        }
+                      }}
+                    >
+                      <Ionicons name="cart" size={20} color="#fff" />
+                      <Text style={styles.cartButtonText}>
+                        {isInCart(item.id) ? "إزالة من السلة" : "أضف إلى السلة"}
+                      </Text>
+                    </TouchableOpacity>
+
+
                   </View>
                 </View>
               </TouchableOpacity>
@@ -288,7 +315,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  webinarImage: { width: 130, height: 130, borderRadius: 10 },
+  webinarImage: { width: 130, height: 180, borderRadius: 10 },
 
   webinarDetails: { marginRight: 15, flex: 1 },
 
@@ -352,7 +379,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 6,
   },
-  
+  addToCartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6490ab",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginTop: 8
+  },
+  addToCartText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8
+  },
+  cartButton: {
+    marginTop: 10,
+    backgroundColor: "#1f3b64",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cartButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginRight: 8,
+  },
+    
 });
 
 export default WebinarsScreen;

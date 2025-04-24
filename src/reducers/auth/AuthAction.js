@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://f124-41-226-8-251.ngrok-free.app/api'; 
+export const API_URL = 'https://42e8-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
-import jwt_decode from "jwt-decode"
+
 
 export const FETCH_CORRECTION_VIDEO_REQUEST = "FETCH_CORRECTION_VIDEO_REQUEST";
 export const FETCH_CORRECTION_VIDEO_SUCCESS = "FETCH_CORRECTION_VIDEO_SUCCESS";
@@ -23,6 +23,7 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
           full_name: fullName, 
           mobile,
           password,
+          confirm_password: password,
           role_id, 
         }),
       });
@@ -271,8 +272,6 @@ export const resetPassword = (mobile, newPassword, navigation) => async (dispatc
             let childrenData = await AsyncStorage.getItem("children");
             let children = childrenData ? JSON.parse(childrenData) : [];
 
-         //   console.log("✅ Children loaded from AsyncStorage:", children);
-
             if (!Array.isArray(children) || children.length === 0) {
                 console.warn("⚠️ No children found in AsyncStorage, fetching from API...");
 
@@ -352,8 +351,6 @@ export const updateChild = (childData, callback) => async (dispatch) => {
       throw new Error("User is not authenticated.");
     }
 
-    console.log("🔄 Updating Child Data:", childData);
-
     const response = await fetch(`${API_URL}/enfants/update/${childData.id}`, {
       method: "PUT",
       headers: {
@@ -363,6 +360,7 @@ export const updateChild = (childData, callback) => async (dispatch) => {
       body: JSON.stringify({
         nom: childData.nom, // ✅ Ensure it matches the API expected key
         level_id: childData.level_id,
+        sexe: childData.sexe,
       }),
     });
 
@@ -472,13 +470,11 @@ export const fetchDocumentByManuelId = (manuelId) => {
     dispatch({ type: "DOCUMENT_LOADING" });
 
     try {
-      console.log(`📥 Fetching documents for manuel_id: ${manuelId}`);
 
       const response = await fetch(`${API_URL}/documents/manuel/${manuelId}`);
       const data = await response.json();
 
       if (response.ok && data.length > 0) {
-        console.log("✅ Document fetched successfully:", data[0]);
         dispatch({ type: "DOCUMENT_SUCCESS", payload: data[0] });
       } else {
         console.error("❌ No documents found for manuel_id:", manuelId);
@@ -494,7 +490,6 @@ export const fetchDocumentByManuelId = (manuelId) => {
 export const switchChild = (child) => {
   return async (dispatch) => {
     try {
-      console.log(`🔄 Switching to child: ${child.full_name} (ID: ${child.id})`);
 
       const token = await AsyncStorage.getItem("token");
       if (!token) {
@@ -516,7 +511,6 @@ export const switchChild = (child) => {
         throw new Error(resData.error || "Failed to switch child.");
       }
 
-      //console.log("✅ Child switched successfully:", resData);
       await AsyncStorage.setItem("activeChildId", child.id.toString());
       // ✅ Save the new token and active child
       await AsyncStorage.setItem("tokenChild", resData.token);
@@ -540,7 +534,6 @@ export const switchChild = (child) => {
     const resData2 = await response2.json();
       // ✅ Ensure children list is stored in AsyncStorage
       if (resData2) {
-       // console.log("✅ Updated children list after switching:", resData2);
         await AsyncStorage.setItem("children", JSON.stringify(resData2));
         
         // ✅ Update Redux Store with new children list
@@ -549,8 +542,6 @@ export const switchChild = (child) => {
           payload: resData2
         });
       }
-      // else {
-      //   console.log("empty children");      }
       } 
     catch (error) {
       console.error("❌ Error switching child:", error.message);
@@ -564,7 +555,6 @@ export const fetchCorrectionVideoUrl = (manuelId, icon, page) => async (dispatch
 
   try {
     const token = await AsyncStorage.getItem("token"); // ✅ Get auth token
-    console.log("🔑 Retrieved Token:", token); // Log the token
 
     if (!token) {
       console.error("❌ No auth token found");
@@ -574,7 +564,6 @@ export const fetchCorrectionVideoUrl = (manuelId, icon, page) => async (dispatch
 
 
       const apiUrl = `${API_URL}/documents/correction-video/${manuelId}/${icon}/${page}`;
-    console.log("📡 Sending Request to:", apiUrl); // Log API URL
 
     const response = await fetch(apiUrl, {
       method: "GET",
@@ -583,14 +572,8 @@ export const fetchCorrectionVideoUrl = (manuelId, icon, page) => async (dispatch
         "Authorization": `Bearer ${token}`, // ✅ Include authentication token
       },
     });
-
-    console.log("📥 API Response Status:", response.status); // Log response status
-
     const data = await response.json();
-    console.log("📤 API Response Data:", data); // Log response data
-
     if (response.ok && data.correctionVideoUrl) {
-      console.log("✅ Correction Video URL Found:", data.correctionVideoUrl);
       dispatch({ type: "FETCH_CORRECTION_VIDEO_SUCCESS", payload: data.correctionVideoUrl });
     } else {
       console.error("❌ API Error:", data);
@@ -649,13 +632,11 @@ export const fetchWebinarsByLevel = (levelId) => async (dispatch) => {
   dispatch({ type: "FETCH_WEBINARS_REQUEST" });
 
   try {
-      console.log(`📥 Fetching webinars for level_id: ${levelId}`);
 
       const response = await fetch(`${API_URL}/webinars/level/${levelId}`);
       const data = await response.json();
 
       if (response.ok) {
-         // console.log("✅ Webinars fetched successfully:", data);
           dispatch({ type: "FETCH_WEBINARS_SUCCESS", payload: data || [] });
       } else {
           console.error("❌ API Error fetching webinars:", data.error);
@@ -681,7 +662,6 @@ export const fetchTeacherById = (id) => async (dispatch) => {
   try {
     const response = await fetch(`${API_URL}/teachers/${id}`);
     const text = await response.text();
-   // console.log("🔎 API Raw Response:", text);
 
     const data = JSON.parse(text);
 
@@ -1016,21 +996,16 @@ export const fetchMeetingById = (meetingId) => async (dispatch) => {
   dispatch({ type: FETCH_MEETING_BY_ID_REQUEST });
 
   try {
-    console.log(`🔍 Fetching meeting with ID: ${meetingId}`);
     
     const response = await fetch(`${API_URL}/meetings/${meetingId}`);
     const data = await response.json();
 
-    console.log("📥 API Response:", data);
-
     if (response.ok) {
       // Check if data is an array and has at least one element
       if (Array.isArray(data) && data.length > 0) {
-        console.log("✅ Meeting data found:", data[0]);
         dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data[0] });
       } else if (typeof data === 'object' && data !== null) {
         // If data is a single object
-        console.log("✅ Meeting data found:", data);
         dispatch({ type: FETCH_MEETING_BY_ID_SUCCESS, payload: data });
       } else {
         console.error("❌ No meeting data found in response");
@@ -1088,12 +1063,9 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
       } else {
           // If the first attempt fails, try without sale_id
           if (data.message && (data.message.includes("sale_id") || data.message.includes("Vente non trouvée"))) {
-              console.log("⚠️ [Avertissement] - Erreur liée au sale_id, tentative de réservation sans sale_id");
               
               // Try again without sale_id
               const retryPayload = { ...meetingData };
-              
-              console.log("🔄 [Nouvelle tentative] - Sans sale_id:", JSON.stringify(retryPayload, null, 2));
               
               const retryResponse = await fetch(`${API_URL}/meetings/reserve`, {
                   method: 'POST',
@@ -1105,7 +1077,6 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
               });
               
               const retryData = await retryResponse.json();
-              console.log("📥 [Réponse du serveur (2ème tentative)] :", JSON.stringify(retryData, null, 2));
               
               if (retryResponse.ok) {
                   dispatch({ 
@@ -1119,7 +1090,6 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
                   }, 1000);
               } else {
                   const errorMessage = retryData.message || retryData.error || "Erreur inconnue";
-                  console.log("❌ [Erreur Serveur - Réservation] :", errorMessage);
                   dispatch({ 
                       type: "RESERVE_MEETING_FAILURE", 
                       payload: errorMessage 
@@ -1127,7 +1097,6 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
               }
           } else {
               const errorMessage = data.message || data.error || "Erreur inconnue";
-              console.log("❌ [Erreur Serveur - Réservation] :", errorMessage);
               dispatch({ 
                   type: "RESERVE_MEETING_FAILURE", 
                   payload: errorMessage 
@@ -1135,7 +1104,6 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
           }
       }
   } catch (error) {
-      console.log("🚨 [Erreur Fetch - Réservation] :", error.message);
       dispatch({ 
           type: "RESERVE_MEETING_FAILURE", 
           payload: error.message || "Erreur de connexion au serveur" 
@@ -1187,3 +1155,126 @@ export const cancelReservation = (reservationId) => async (dispatch) => {
       dispatch({ type: CANCEL_RESERVATION_FAILURE, payload: error.message });
   }
 }; 
+//checkout cart 
+export const CHECKOUT_REQUEST = "CHECKOUT_REQUEST";
+export const CHECKOUT_SUCCESS = "CHECKOUT_SUCCESS";
+export const CHECKOUT_FAILURE = "CHECKOUT_FAILURE";
+
+export const checkout = (subscribe_id = null, amount = 0) => async (dispatch) => {
+  dispatch({ type: CHECKOUT_REQUEST });
+
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    const body = {
+      payment_method: "card",
+    };
+
+    if (subscribe_id) {
+      body.subscribe_id = subscribe_id;
+      body.amount = amount;
+    }
+
+    const response = await fetch(`${API_URL}/cart/checkout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors du checkout");
+    }
+
+    dispatch({ type: CHECKOUT_SUCCESS, payload: data });
+    Alert.alert("✅ Paiement réussi", "Votre commande a été validée avec succès !");
+  } catch (error) {
+    console.error("❌ Checkout error:", error.message);
+    dispatch({ type: CHECKOUT_FAILURE, payload: error.message });
+    Alert.alert("Erreur", error.message);
+  }
+};
+
+export const ADD_TO_CART_SUCCESS = "ADD_TO_CART_SUCCESS";
+export const REMOVE_FROM_CART_SUCCESS = "REMOVE_FROM_CART_SUCCESS";
+export const FETCH_CART_SUCCESS = "FETCH_CART_SUCCESS";
+export const CART_FAILURE = "CART_FAILURE";
+
+// ✅ Ajouter au panier (meetings ou webinars)
+export const addToCart = (payload) => async (dispatch) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    if (!token) throw new Error("Token parent manquant");
+
+    console.log("🎫 TOKEN (parent) :", token);
+    console.log("📦 Payload envoyé au panier :", payload);
+
+    const response = await fetch(`${API_URL}/cart/add`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de l'ajout au panier");
+    }
+
+    dispatch({ type: ADD_TO_CART_SUCCESS, payload: data });
+  } catch (error) {
+    console.error("❌ Erreur addToCart:", error.message);
+    dispatch({ type: CART_FAILURE, payload: error.message });
+
+    // Optionnel : Affichage d'alerte
+    Alert.alert("Erreur", error.message || "Impossible d'ajouter au panier.");
+  }
+};
+
+// ✅ Supprimer du panier
+export const removeFromCart = (itemId) => async (dispatch) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) throw new Error("Token parent manquant");
+
+    const response = await fetch(`${API_URL}/cart/${itemId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error("Erreur suppression panier");
+
+    dispatch({ type: REMOVE_FROM_CART_SUCCESS, payload: itemId });
+  } catch (error) {
+    console.error("❌ Erreur removeFromCart:", error.message);
+    dispatch({ type: CART_FAILURE, payload: error.message });
+  }
+};
+
+// ✅ Récupérer le panier (webinars et meetings inclus)
+export const fetchCart = () => async (dispatch) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) throw new Error("Token parent manquant");
+
+    const response = await fetch(`${API_URL}/cart`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Erreur récupération panier");
+
+    dispatch({ type: FETCH_CART_SUCCESS, payload: data });
+  } catch (error) {
+    console.error("❌ Erreur fetchCart:", error.message);
+    dispatch({ type: CART_FAILURE, payload: error.message });
+  }
+};

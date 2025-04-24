@@ -8,9 +8,12 @@ import {
   StyleSheet,
   Alert,
   FlatList,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
@@ -57,6 +60,7 @@ const AddKidsScreen = () => {
         id: existingChild.id,
         nom: childName,
         level_id: backendLevelId,
+        sexe: formatGender(selectedGender),
       };
 
       dispatch(updateChild(updatedChild, () => {
@@ -84,115 +88,115 @@ const AddKidsScreen = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <View style={styles.container}>
-            {/* 🔙 Bouton de retour */}
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Image source={require("../../assets/icons/back.png")} style={styles.backIcon} />
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <Text style={styles.title}>قم بملء البيانات لإضافة طفلك</Text>
-          </View>
-
-          <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
-
-          <Text style={styles.label}>الاسم</Text>
-          <View style={styles.inputContainer}>
-            <Image source={require("../../assets/icons/user.png")} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="الاسم"
-              placeholderTextColor="#DADADA"
-              value={childName}
-              onChangeText={setChildName}
-            />
-          </View>
-
-          <Text style={styles.label}>الجنس</Text>
-          <View style={styles.genderContainer}>
-            <TouchableOpacity
-              style={[styles.genderButton, selectedGender === "male" && styles.selectedButton]}
-              onPress={() => setSelectedGender("male")}
-            >
-              <Image source={require("../../assets/icons/male.png")} style={styles.genderIcon} />
-              <Text style={styles.genderText}>ذكر</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.container}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Image source={require("../../assets/icons/back.png")} style={styles.backIcon} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.genderButton, selectedGender === "female" && styles.selectedButton]}
-              onPress={() => setSelectedGender("female")}
-            >
-              <Image source={require("../../assets/icons/female.png")} style={styles.genderIcon} />
-              <Text style={styles.genderText}>أنثى</Text>
-            </TouchableOpacity>
-          </View>
 
-          <Text style={styles.label}>المستوى الدراسي</Text>
-          <View style={styles.levelContainer}>
-            <View style={styles.levelRow}>
-              {[1, 2, 3].map((level) => (
-                <TouchableOpacity
-                  key={level}
-                  style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
-                  onPress={() => setSelectedLevel(level)}
-                >
-                  <Image source={levelIcons[level]} style={styles.levelIcon} />
-                </TouchableOpacity>
-              ))}
+            <View style={styles.header}>
+              <Text style={styles.title}>قم بملء البيانات لإضافة طفلك</Text>
             </View>
-            <View style={styles.levelRow}>
-              {[4, 5, 6].map((level) => (
-                <TouchableOpacity
-                  key={level}
-                  style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
-                  onPress={() => setSelectedLevel(level)}
-                >
-                  <Image source={levelIcons[level]} style={styles.levelIcon} />
-                </TouchableOpacity>
-              ))}
+
+            <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
+
+            <Text style={styles.label}>الاسم</Text>
+            <View style={styles.inputContainer}>
+              <Image source={require("../../assets/icons/user.png")} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="الاسم"
+                placeholderTextColor="#DADADA"
+                value={childName}
+                onChangeText={setChildName}
+              />
             </View>
-          </View>
 
-          <FlatList
-            data={kidsList}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.kidItem}>
-                <Text style={styles.kidText}>{item.Nom} - {item.sexe} - مستوى {item.level_id - 5}</Text>
-              </View>
-            )}
-          />
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={handleSaveChild} disabled={loading}>
-              <Text style={styles.buttonText}>
-                {loading ? "جاري الحفظ..." : existingChild ? "تحديث الطفل" : "إضافة طفل"}
-              </Text>
-            </TouchableOpacity>
-
-            {kidsList.length > 0 && (
-              <TouchableOpacity style={styles.addButton} onPress={handleSubmitAll}>
-                <Text style={styles.buttonText}>التالي</Text>
+            <Text style={styles.label}>الجنس</Text>
+            <View style={styles.genderContainer}>
+              <TouchableOpacity
+                style={[styles.genderButton, selectedGender === "male" && styles.selectedButton]}
+                onPress={() => setSelectedGender("male")}
+              >
+                <Image source={require("../../assets/icons/male.png")} style={styles.genderIcon} />
+                <Text style={styles.genderText}>ذكر</Text>
               </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </ScrollView>
+              <TouchableOpacity
+                style={[styles.genderButton, selectedGender === "female" && styles.selectedButton]}
+                onPress={() => setSelectedGender("female")}
+              >
+                <Image source={require("../../assets/icons/female.png")} style={styles.genderIcon} />
+                <Text style={styles.genderText}>أنثى</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>المستوى الدراسي</Text>
+            <View style={styles.levelContainer}>
+              <View style={styles.levelRow}>
+                {[1, 2, 3].map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
+                    onPress={() => setSelectedLevel(level)}
+                  >
+                    <Image source={levelIcons[level]} style={styles.levelIcon} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.levelRow}>
+                {[4, 5, 6].map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.levelButton, selectedLevel === level && styles.selectedLevel]}
+                    onPress={() => setSelectedLevel(level)}
+                  >
+                    <Image source={levelIcons[level]} style={styles.levelIcon} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <FlatList
+              data={kidsList}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.kidItem}>
+                  <Text style={styles.kidText}>{item.Nom} - {item.sexe} - مستوى {item.level_id - 5}</Text>
+                </View>
+              )}
+              style={{ width: '100%' }}
+              contentContainerStyle={{ paddingHorizontal: 20 }}
+            />
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.addButton} onPress={handleSaveChild} disabled={loading}>
+                <Text style={styles.buttonText}>
+                  {loading ? "جاري الحفظ..." : existingChild ? "تحديث الطفل" : "إضافة طفل"}
+                </Text>
+              </TouchableOpacity>
+
+              {kidsList.length > 0 && (
+                <TouchableOpacity style={styles.addButton} onPress={handleSubmitAll}>
+                  <Text style={styles.buttonText}>التالي</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    paddingBottom: 30,
-  },
   container: {
-    flex: 1,
     backgroundColor: "#F5F5F5",
-    padding: 60,
+    padding: 30,
+    paddingBottom: 120,
     alignItems: "center",
   },
-  header: { marginBottom: 20 },
+  header: { marginBottom: 30 },
   title: { fontSize: 22, fontWeight: "bold", textAlign: "center", color: "#1F3B64" },
   image: { width: 230, height: 150, resizeMode: "contain", marginBottom: 20 },
   label: { fontSize: 20, fontWeight: "bold", marginBottom: 10, alignSelf: "flex-end", color: "#1F3B64" },
@@ -244,11 +248,10 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: 30,
     left: 15,
     zIndex: 999,
   },
-  
   buttonText: { fontSize: 20, color: "#FFF", fontWeight: "bold" },
   kidItem: { marginVertical: 5 },
   kidText: { color: "#1F3B64", fontSize: 16 },

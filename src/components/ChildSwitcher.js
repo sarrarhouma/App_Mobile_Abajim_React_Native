@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Image, TouchableOpacity, FlatList, StyleSheet, Text } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { switchChild } from "../reducers/auth/AuthAction";
@@ -26,7 +26,7 @@ const ChildSwitcher = () => {
   const children = useSelector((state) => state.auth.children);
   const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
   const parentInfo = useSelector((state) => state.auth.parentInfo);
-
+  const prevChildIdRef = useRef(activeChild?.id);
   const getInitials = (fullName) => {
     if (!fullName) return "؟";
     const names = fullName.trim().split(" ");
@@ -35,7 +35,12 @@ const ChildSwitcher = () => {
     }
     return names[0].slice(0, 2).toUpperCase();
   };
-
+  useEffect(() => {
+    if (activeChild?.id && activeChild.id !== prevChildIdRef.current) {
+      prevChildIdRef.current = activeChild.id;
+      navigation.navigate("Books");
+    }
+  }, [activeChild, navigation]);
   return (
     <View style={styles.container}>
       <View style={styles.header}>

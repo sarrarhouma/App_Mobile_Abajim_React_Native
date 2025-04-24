@@ -13,6 +13,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { Logout, fetchManuelsByLevel, fetchVideoCounts } from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
+import CartIcon from "../components/CartIcon";
+import SmartSubscriptionEntry from "../components/SmartSubscriptionEntry";
+import NotificationIcon from "../components/NotificationIcon";
+import FavoriteIcon from "../components/FavoriteIcon";
 
 const BooksScreen = () => {
   const navigation = useNavigation();
@@ -31,15 +35,19 @@ const BooksScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => dispatch(Logout(navigation))}
-          style={styles.logoutButton}
-        >
-          <Ionicons name="log-out-outline" size={24} color="red" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TouchableOpacity
+            onPress={() => dispatch(Logout(navigation))}
+            style={styles.logoutButton}
+          >
+            <Ionicons name="log-out-outline" size={24} color="red" />
+          </TouchableOpacity>
+          <CartIcon onPress={() => navigation.navigate("CartScreen")} />
+        </View>
       ),
     });
   }, [navigation, dispatch]);
+  
 
   useEffect(() => {
     if (activeChild?.level_id) {
@@ -76,14 +84,13 @@ const BooksScreen = () => {
           ListHeaderComponent={
             <View style={styles.header}>
               <View style={styles.headerBottom}>
+
                 <Text style={styles.title}> الكتب المدرسية</Text>
                 <View style={styles.headerIcons}>
-                  <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-                    <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-                  </TouchableOpacity>
+
+                <NotificationIcon onPress={() => navigation.navigate("Settings", { screen: "Notifications" })} />
+                  <FavoriteIcon onPress={() =>  navigation.navigate("Settings", { screen: "Favorites" })} />
+                  <CartIcon onPress={() => navigation.navigate("CartScreen")} />
                 </View>
               </View>
             </View>
@@ -93,7 +100,7 @@ const BooksScreen = () => {
           }
         />
       )}
-
+<SmartSubscriptionEntry />
       <BottomNavigation />
     </View>
   );
@@ -193,6 +200,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 50,
   },
+  addToCartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6490ab",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginTop: 8
+  },
+  addToCartText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8
+  }
+  
 });
 
 export default BooksScreen;

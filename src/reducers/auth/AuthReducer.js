@@ -29,7 +29,11 @@ const initialState = {
     cancelError: null,
     cancelSuccess: false,
     sale: null,
-    saleError: null
+    saleError: null,
+    orderSuccess: false,
+    cartItems: [],
+    
+
 
 
 };
@@ -313,7 +317,6 @@ const authReducer = (state = initialState, action) => {
             return { ...state, loading: true, error: null };
                 
             case "FETCH_MEETING_BY_ID_SUCCESS":
-                console.log("Reducer Meeting récupéré : ", action.payload); 
                 return { ...state, loading: false, meeting: action.payload };
                 
         case "FETCH_MEETING_BY_ID_FAILURE":
@@ -380,6 +383,46 @@ const authReducer = (state = initialState, action) => {
                     cancelError: action.payload,
                     cancelSuccess: false
                 };
+        case "CHECKOUT_REQUEST":
+            return { ...state, isLoading: true, error: null };
+                  
+        case "CHECKOUT_SUCCESS":
+            return {
+                     ...state,
+                      isLoading: false,
+                      orderSuccess: true,
+                      error: null
+                };
+                  
+        case "CHECKOUT_FAILURE":
+            return {
+                    ...state,
+                      isLoading: false,
+                      orderSuccess: false,
+                      error: action.payload
+                };
+        case "SET_CART_ITEMS":
+            return {
+                      ...state,
+                      cartItems: action.payload
+                };
+        case "FETCH_CART_SUCCESS":
+            return { ...state, cartItems: action.payload, isLoading: false };
+                  
+        case "ADD_TO_CART_SUCCESS":
+            return { ...state, cartItems: [action.payload, ...state.cartItems] };
+                  
+        case "REMOVE_FROM_CART_SUCCESS":
+            return {
+                      ...state,
+                      cartItems: state.cartItems.filter((item) => item.id !== action.payload),
+                };
+                  
+        case "CART_FAILURE":
+                return { ...state, isLoading: false, error: action.payload };
+                  
+                  
+                  
         default:
             return state;
     }

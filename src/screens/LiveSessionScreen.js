@@ -12,9 +12,11 @@ import {
 import { useNavigation, useFocusEffect  } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMeetingsByLevel } from "../reducers/auth/AuthAction";
+import { fetchMeetingsByLevel,  addToCart, removeFromCart, fetchCart } from "../reducers/auth/AuthAction";
 import BottomNavigation from "../components/BottomNavigation";
-
+import CartIcon from "../components/CartIcon";
+import NotificationIcon from "../components/NotificationIcon";
+import FavoriteIcon from "../components/FavoriteIcon";
 const badgeColors = {
   "العربية": "#FF9800",
   "الرياضيات": "#4CAF50",
@@ -41,9 +43,13 @@ const LiveSessionsScreen = () => {
   const dispatch = useDispatch();
   const children = useSelector((state) => state.auth.children);
   const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
-  const { meetings, loadingMeetings } = useSelector((state) => state.auth);
+  const { meetings, loadingMeetings, cartItems } = useSelector((state) => state.auth);
   const [expanded, setExpanded] = useState(null);
+  // const cartItems = useSelector((state) => state.auth.cartItems);
 
+  const isInCart = (meetingId) => {
+    return cartItems?.some((item) => item.meeting_id === meetingId);
+  };  
   useEffect(() => {
     if (activeChild?.level_id) {
       dispatch(fetchMeetingsByLevel(activeChild.level_id));
@@ -69,12 +75,10 @@ const LiveSessionsScreen = () => {
                   <View style={styles.headerBottom}>        
                     <Text style={styles.title}>الدروس المباشرة</Text>
                     <View style={styles.headerIcons}>
-                      <TouchableOpacity>
-                        <Image source={require("../../assets/icons/coin.png")} style={styles.icon} />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => navigation.navigate("Settings", { screen: "Notifications" })}>
-                        <Image source={require("../../assets/icons/notifications.png")} style={styles.icon} />
-                      </TouchableOpacity>
+                    <CartIcon onPress={() => navigation.navigate("CartScreen")} />
+                    <FavoriteIcon onPress={() =>  navigation.navigate("Settings", { screen: "Favorites" })} />
+                    <NotificationIcon onPress={() => navigation.navigate("Settings", { screen: "Notifications" })} />
+
                     </View>
                   </View>
                 </View>
@@ -94,22 +98,22 @@ const LiveSessionsScreen = () => {
                             </View>
                           )}
                         </View>
-    <View style={styles.avatarWrapper}>
-        {item.teacher?.avatar ? (
-            <Image
-                source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
-                style={styles.teacherAvatar}
-            />
-        ) : (
-            <View style={styles.initialsCircle}>
-                <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
-            </View>
-        )}
-    </View>
+                  <View style={styles.avatarWrapper}>
+                      {item.teacher?.avatar ? (
+                          <Image
+                              source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
+                              style={styles.teacherAvatar}
+                          />
+                      ) : (
+                          <View style={styles.initialsCircle}>
+                              <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
+                          </View>
+                      )}
+                  </View>
 
-    <View style={styles.teacherInfo}>
-        <Text style={styles.teacherName}>{item.teacher?.full_name || "غير متوفر"}</Text>
-                       
+                  <View style={styles.teacherInfo}>
+                      <Text style={styles.teacherName}>{item.teacher?.full_name || "غير متوفر"}</Text>
+                                    
                       </View>
                     </View>
 
@@ -133,29 +137,55 @@ const LiveSessionsScreen = () => {
                     </View>
 
                     <TouchableOpacity 
-    style={styles.accordionHeader}
-    onPress={() => setExpanded(expanded === item.id ? null : item.id)}
->
-    <Text style={styles.accordionTitle}>
-        📋 تفاصيل الجلسات 
-    </Text>
-    <Ionicons name={expanded === item.id ? "chevron-up" : "chevron-down"} size={24} color="#0097A7" />
-</TouchableOpacity>
+                      style={styles.accordionHeader}
+                      onPress={() => setExpanded(expanded === item.id ? null : item.id)}
+                  >
+                      <Text style={styles.accordionTitle}>
+                          📋 تفاصيل الجلسات 
+                      </Text>
+                      <Ionicons name={expanded === item.id ? "chevron-up" : "chevron-down"} size={24} color="#0097A7" />
+                  </TouchableOpacity>
 
-{expanded === item.id && (
-    <ScrollView style={styles.sessionContainer}>
-        {item.times.map((time, index) => (
-            <View key={index} style={styles.sessionCard}>
-                <Text style={styles.sessionText}>اليوم : {time.day_label}</Text>
-                <Text style={styles.sessionText}>المادة الفرعية : {time.submaterial?.name || "غير متوفر"}</Text>
-                <Text style={styles.sessionText}>التاريخ : {new Date(time.meet_date * 1000).toLocaleDateString()}</Text>
-                <Text style={styles.sessionText}>من : {new Date(time.start_time * 1000).toLocaleTimeString()}</Text>
-                <Text style={styles.sessionText}>إلى : {new Date(time.end_time * 1000).toLocaleTimeString()}</Text>
-            </View>
-        ))}
-    </ScrollView>
-)}
+                        {expanded === item.id && (
+                            <ScrollView style={styles.sessionContainer}>
+                                {item.times.map((time, index) => (
+                                    <View key={index} style={styles.sessionCard}>
+                                        <Text style={styles.sessionText}>اليوم : {time.day_label}</Text>
+                                        <Text style={styles.sessionText}>المادة الفرعية : {time.submaterial?.name || "غير متوفر"}</Text>
+                                        <Text style={styles.sessionText}>التاريخ : {new Date(time.meet_date * 1000).toLocaleDateString()}</Text>
+                                        <Text style={styles.sessionText}>من : {new Date(time.start_time * 1000).toLocaleTimeString()}</Text>
+                                        <Text style={styles.sessionText}>إلى : {new Date(time.end_time * 1000).toLocaleTimeString()}</Text>
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        )}
                   </View>
+                  {/* <TouchableOpacity
+                  style={[
+                    styles.cartButtonBottom,
+                    { backgroundColor: isInCart(item.id) ? "#818894" : "#1f3b64" },
+                  ]}
+                  onPress={async () => {
+                    console.log("clicked", item.id);
+                    const token = await AsyncStorage.getItem("token"); // ✅ token parent
+                    if (!token) {
+                      console.warn("❌ Token parent manquant");
+                      return;
+                    }
+
+                    const itemInCart = cartItems?.find((i) => i.meeting_id === item.id);
+                    if (itemInCart) {
+                      dispatch(removeFromCart(itemInCart.id)).then(() => dispatch(fetchCart()));
+                    } else {
+                      dispatch(addToCart({ meeting_id: item.id })).then(() => dispatch(fetchCart()));
+                    }
+                  }}
+                >
+                  <Ionicons name="cart" size={16} color="#fff" style={{ marginLeft: 5 }} />
+                  <Text style={styles.cartButtonText}>
+                    {isInCart(item.id) ? "إزالة من السلة" : "أضف إلى السلة"}
+                  </Text>
+                </TouchableOpacity> */}
 
             </TouchableOpacity>
           )}
@@ -207,9 +237,9 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   teacherAvatar: { 
-    width: 80, 
-    height: 80, 
-    borderRadius: 40, 
+    width: 120, 
+    height: 120, 
+    borderRadius: 60, 
     marginBottom: 10,
     shadowColor: "#000",
     shadowOpacity: 0.2,
@@ -330,6 +360,42 @@ sessionText: {
     color: "#333", 
     textAlign: "right" 
 },
+addToCartButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#6490ab",
+  paddingVertical: 6,
+  paddingHorizontal: 14,
+  borderRadius: 10,
+  alignSelf: "flex-start",
+  marginTop: 8
+},
+addToCartText: {
+  color: "#fff",
+  fontWeight: "bold",
+  marginLeft: 8
+},
+cartButtonBottom: {
+  flexDirection: 'row-reverse',
+  alignItems: 'center',
+  paddingVertical: 15,
+  paddingHorizontal: 50,
+  borderRadius: 25,
+  backgroundColor: '#1f3b64',
+  alignSelf: 'center',
+  marginTop: 12,
+  elevation: 3,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+},
+cartButtonText: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "bold",
+},
+
 });
 
 export default LiveSessionsScreen;
