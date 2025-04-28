@@ -17,7 +17,7 @@ import CartIcon from "../components/CartIcon";
 import SmartSubscriptionEntry from "../components/SmartSubscriptionEntry";
 import NotificationIcon from "../components/NotificationIcon";
 import FavoriteIcon from "../components/FavoriteIcon";
-
+import ActiveChildHeaderAvatar from "../components/ActiveChildHeaderAvatar";
 const BooksScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -84,7 +84,7 @@ const BooksScreen = () => {
           ListHeaderComponent={
             <View style={styles.header}>
               <View style={styles.headerBottom}>
-
+              <ActiveChildHeaderAvatar/>
                 <Text style={styles.title}> الكتب المدرسية</Text>
                 <View style={styles.headerIcons}>
 

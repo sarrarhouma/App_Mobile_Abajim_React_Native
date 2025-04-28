@@ -149,8 +149,9 @@ const WebinarsScreen = () => {
                     style={styles.webinarImage}
                   />
                   <View style={styles.webinarDetails}>
-                    <Text style={styles.webinarTitle}>{item.slug}</Text>
-          
+                  <Text style={styles.webinarTitle}>
+                  {item.translations?.[0]?.title || item.slug || "عنوان غير متوفر"}
+                </Text>
                     <View style={styles.infoContainer}>
                       {item.teacher?.avatar ? (
                         <Image

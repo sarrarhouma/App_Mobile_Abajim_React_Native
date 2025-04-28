@@ -99,7 +99,14 @@ const AddKidsScreen = () => {
               <Text style={styles.title}>قم بملء البيانات لإضافة طفلك</Text>
             </View>
 
-            <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
+            <TouchableOpacity style={styles.avatarContainer}>
+  {existingChild && existingChild.avatar ? (
+    <Image source={{ uri: `https://www.abajim.com/${existingChild.avatar}` }} style={styles.avatarImage} />
+  ) : (
+    <Image source={require("../../assets/images/kids.jpg")} style={styles.image} />
+  )}
+</TouchableOpacity>
+
 
             <Text style={styles.label}>الاسم</Text>
             <View style={styles.inputContainer}>
@@ -196,6 +203,24 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     alignItems: "center",
   },
+  avatarContainer: {
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  avatarImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: "#1F3B64",
+  },
+  image: {
+    width: 230,
+    height: 150,
+    resizeMode: "contain",
+    marginBottom: 20,
+  },
+  
   header: { marginBottom: 30 },
   title: { fontSize: 22, fontWeight: "bold", textAlign: "center", color: "#1F3B64" },
   image: { width: 230, height: 150, resizeMode: "contain", marginBottom: 20 },

@@ -1,40 +1,61 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
-import { useDispatch } from "react-redux";
-import { checkout } from "../reducers/auth/AuthAction";
+import React, { useRef, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, Animated } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from 'expo-linear-gradient'; // Dégradé
 
-const SubscriptionCard = ({ subscribe_id = 3, amount = 120, onClose }) => {
-  const dispatch = useDispatch();
+const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
+  const navigation = useNavigation();
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 6,
+    }).start();
+  }, []);
 
   const handleSubscribe = () => {
-    dispatch(checkout(subscribe_id, amount));
+    navigation.navigate("SubscriptionScreen");
   };
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.card}>
-        {/* En-tête stylisée */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.cardTitle}>🎓 اشترك الآن في عرض الكرتابة</Text>
-          <Text style={styles.cardSubtitle}>كل ما يحتاجه طفلك للنجاح 📚</Text>
-        </View>
+      <Animated.View style={[styles.cardWrapper, { transform: [{ scale: scaleAnim }] }]}>
+        <LinearGradient
+          colors={['#e0f7fa', '#ffffff']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.card}
+        >
+          {/* Bouton de fermeture */}
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <Text style={styles.closeText}>×</Text>
+          </TouchableOpacity>
 
-        {/* Détails prix et offre */}
-        <View style={styles.detailsContainer}>
-          <Text style={styles.price}>🪙 {amount} دينار / الشهر</Text>
-          <Text style={styles.bonus}> وصول كامل للدروس + تمارين + دعم مباشر</Text>
-        </View>
+          {/* Image du pack */}
+          <Image
+            source={require("../../assets/images/2151103639-removebg-preview.png")}
+            style={styles.packImage}
+          />
 
-        {/* Bouton d'action */}
-        <TouchableOpacity style={styles.btn} onPress={handleSubscribe}>
-          <Text style={styles.btnText}>ابدأ الآن</Text>
-        </TouchableOpacity>
+          {/* Titre du pack */}
+          <Text style={styles.packTitle}>
+            عرض الكرطابلة - اشتراك كامل للكتب المدرسية و الدروس الإضافية 📚
+          </Text>
 
-        {/* Bouton de fermeture */}
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <Text style={styles.closeText}>×</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Prix */}
+          <View style={styles.priceContainer}>
+            <Text style={styles.oldPrice}>120 د.ت</Text>
+            <Text style={styles.newPrice}>80 د.ت</Text>
+          </View>
+
+          {/* Bouton d'abonnement */}
+          <TouchableOpacity style={styles.btn} onPress={handleSubscribe}>
+            <Text style={styles.btnText}>ابدأ الآن</Text>
+          </TouchableOpacity>
+        </LinearGradient>
+      </Animated.View>
     </View>
   );
 };
@@ -48,84 +69,83 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     zIndex: 9999,
     justifyContent: "center",
     alignItems: "center",
   },
+  cardWrapper: {
+    width: width * 0.8,
+  },
   card: {
-    width: width * 0.85,
-    backgroundColor: "#ffffff",
     borderRadius: 20,
-    padding: 25,
+    padding: 20,
     alignItems: "center",
-    borderWidth: 1.2,
-    borderColor: "#1f90ab",
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  headerContainer: {
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#1f3c88",
-  },
-  cardSubtitle: {
-    fontSize: 15,
-    color: "#666",
-    marginTop: 6,
-    textAlign: "center",
-  },
-  detailsContainer: {
-    alignItems: "center",
-    marginVertical: 15,
-  },
-  price: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#009688",
-  },
-  bonus: {
-    fontSize: 14,
-    color: "#444",
-    marginTop: 8,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  btn: {
-    backgroundColor: "#1f3c88",
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginTop: 15,
-  },
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
   },
   closeBtn: {
     position: "absolute",
     top: 10,
     right: 10,
     backgroundColor: "#f5f5f5",
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
     elevation: 2,
   },
   closeText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1F3B64",
+  },
+  packImage: {
+    width: 150,
+    height: 150,
+    resizeMode: "contain",
+    marginBottom: 10,
+  },
+  packTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#1f3c88",
+    color: "#1F3B64",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  priceContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  oldPrice: {
+    fontSize: 16,
+    textDecorationLine: "line-through",
+    color: "#888",
+    marginHorizontal: 8,
+  },
+  newPrice: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#4CAF50",
+  },
+  btn: {
+    backgroundColor: "#1F3B64",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  btnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

@@ -15,7 +15,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchParentInfo, updateProfileImage, Logout } from "../reducers/auth/AuthAction";
 import BottomNavigation from "../components/BottomNavigation";
-import ChildSwitcher from "../components/ChildSwitcher"; // ✅ Ajout du composant
+import ChildSwitcher from "../components/ChildSwitcher";
+import API_BASE_URL from "../utils/Config";
+
+const BASE_URL = API_BASE_URL.replace("/api", "");
 
 I18nManager.allowRTL(false);
 I18nManager.forceRTL(false);
@@ -64,7 +67,6 @@ const SettingsScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 🎯 En-tête avec fond bleu */}
         <View style={styles.coverContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -72,11 +74,10 @@ const SettingsScreen = () => {
           <Text style={styles.headerText}>الإعدادات</Text>
         </View>
 
-        {/* 📌 Avatar style "TeacherScreen" */}
         <View style={styles.profileContainer}>
           <TouchableOpacity onPress={pickImage}>
             {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.avatar} />
+              <Image source={{ uri: `${BASE_URL}${profileImage}` }} style={styles.avatar} />
             ) : (
               <View style={styles.initialsCircle}>
                 <Text style={styles.initialsText}>{getInitials(parentInfo?.full_name)}</Text>
@@ -86,13 +87,11 @@ const SettingsScreen = () => {
           <Text style={styles.name}>{ parentInfo?.full_name || "المستخدم"}</Text>
         </View>
 
-        {/* ✅ Switch enfants avec titre */}
         <View style={styles.childSwitcherSection}>
           <Text style={styles.childSwitcherTitle}>اضغط على صورة طفلك للتغيير الحساب</Text>
           <ChildSwitcher />
         </View>
 
-        {/* 🔧 Options */}
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("ParentInfo")}>
           <Text style={styles.optionText}>معلوماتي الشخصية</Text>
           <Ionicons name="person-outline" size={24} color="#1F3B64" />
@@ -102,7 +101,7 @@ const SettingsScreen = () => {
           <Text style={styles.optionText}>أطفالي</Text>
           <Ionicons name="people-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
-       
+
         <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Favorites")}>
           <Text style={styles.optionText}>دروسي الإضافية المفضلة</Text>
           <Ionicons name="heart-outline" size={24} color="#1F3B64" />
@@ -123,17 +122,14 @@ const SettingsScreen = () => {
           <Ionicons name="card-outline" size={24} color="#1F3B64" />
         </TouchableOpacity>
 
-        {/* 🔴 Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={() => dispatch(Logout(navigation))}>
           <View style={{ flexDirection: "row-reverse", alignItems: "center" }}>
-          <Ionicons name="log-out-outline" size={23} color="white" style={{ marginLeft: 7 }} />
+            <Ionicons name="log-out-outline" size={23} color="white" style={{ marginLeft: 7 }} />
             <Text style={styles.buttonText}>تسجيل خروج</Text>
-            
           </View>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* ⬇️ Bottom navigation */}
       <View style={styles.bottomNav}>
         <BottomNavigation />
       </View>
@@ -163,7 +159,7 @@ const styles = StyleSheet.create({
 
   profileContainer: {
     alignItems: "center",
-    marginTop: -50, // Pour faire chevaucher l'avatar
+    marginTop: -50,
   },
   avatar: {
     width: 100,
@@ -182,10 +178,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
-  
-    borderWidth: 3,             // ✅ Ajout de bordure
-    borderColor: "#FFF",        // ✅ Blanc pour contraster avec le fond
-    shadowColor: "#000",        // ✅ Optionnel pour un petit effet d’ombre
+    borderWidth: 3,
+    borderColor: "#FFF",
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -237,7 +232,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     flexDirection: "row-reverse",
-    backgroundColor: "#f44336", 
+    backgroundColor: "#f44336",
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 30,

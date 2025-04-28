@@ -197,13 +197,14 @@ const authReducer = (state = initialState, action) => {
                 error: null,
             };
 
-        case "FETCH_PARENT_INFO_SUCCESS":
-            return {
-                ...state,
-                parentInfo: action.payload, // ✅ Save fetched parent data
-                isLoading: false,
-                error: null,
-            };
+            case "FETCH_PARENT_INFO_SUCCESS":
+                return {
+                  ...state,
+                  parentInfo: action.payload,
+                  isLoading: false,
+                  error: null,
+                };
+              
 
         case "FETCH_PARENT_INFO_FAILURE":
             return {
@@ -211,6 +212,16 @@ const authReducer = (state = initialState, action) => {
                 isLoading: false,
                 error: action.payload,
             }; 
+            case "UPDATE_AVATAR_SUCCESS":
+                return {
+                  ...state,
+                  parentInfo: {
+                    ...state.parentInfo,
+                    avatar: action.payload,
+                  },
+                  isLoading: false,
+                  error: null,
+                };
         case "FETCH_TEACHER_REQUEST":
             return {
                 ...state,
@@ -251,6 +262,15 @@ const authReducer = (state = initialState, action) => {
               
         case "FETCH_NOTIFICATIONS_FAILURE":
             return { ...state, isLoading: false, error: action.payload };
+            case "MARK_NOTIFICATION_AS_SEEN":
+                return {
+                  ...state,
+                  notifications: state.notifications.map((notif) =>
+                    notif.id === action.payload
+                      ? { ...notif, statuses: [{ seen_at: Date.now() }] }
+                      : notif
+                  )
+                };
         case "FETCH_MANUELS_SUCCESS":
             return {
                 ...state,

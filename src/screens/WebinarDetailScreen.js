@@ -87,11 +87,14 @@ const WebinarDetailScreen = () => {
           source={{ uri: `https://www.abajim.com/${webinar.image_cover}` }}
           style={styles.headerImage}
         />
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="white" />
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+    <Ionicons name="arrow-back-circle" size={36} color="#fff" />
+  </TouchableOpacity>
         <View style={styles.overlayTitle}>
-          <Text style={styles.headerTitle}>{webinar.slug || "عنوان غير متوفر"}</Text>
+        <Text style={styles.headerTitle}>
+            {webinar.translations?.[0]?.title || webinar.slug || "عنوان غير متوفر"}
+          </Text>
+
         </View>
       </View>
 
@@ -210,13 +213,27 @@ const styles = StyleSheet.create({
   headerImage: { width: "100%", height: 280, resizeMode: "cover" },
   backButton: {
     position: "absolute", top: 45, left: 15,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 5, borderRadius: 5
+ padding: 5, borderRadius: 5
   },
   overlayTitle: {
-    position: "absolute", top: 45, right: 15,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", padding: 8, borderRadius: 5
+    position: "absolute",
+    top: 55,
+    right: 20, 
+    backgroundColor: "rgba(255, 255, 255, 0.8)", 
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 30, 
+    elevation: 4, 
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "white", textAlign: "right" },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1F3B64", // bleu foncé pour rester professionnel
+    textAlign: "center",
+  },
 
   teacherCardWrapper: {
     paddingHorizontal: 16,

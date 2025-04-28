@@ -20,13 +20,16 @@ const ActiveChildHeaderAvatar = () => {
 
   return (
     <View style={styles.container}>
-      {activeChild.avatar ? (
-        <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-      ) : (
-        <View style={styles.initialsContainer}>
-          <Text style={styles.initialsText}>{getInitials(activeChild.full_name)}</Text>
-        </View>
-      )}
+      <View style={styles.avatarWrapper}>
+        {activeChild.avatar ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={styles.initialsContainer}>
+            <Text style={styles.initialsText}>{getInitials(activeChild.full_name)}</Text>
+          </View>
+        )}
+        <View style={styles.greenDot} />
+      </View>
       <Text style={styles.name} numberOfLines={1}>{activeChild.full_name}</Text>
     </View>
   );
@@ -35,21 +38,24 @@ const ActiveChildHeaderAvatar = () => {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    marginLeft: 10,
-    maxWidth: 40,
+    marginRight: 40,
+    maxWidth: 60,
+  },
+  avatarWrapper: {
+    position: "relative",
   },
   avatar: {
-    width: 10,
-    height: 10,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: "#4caf50",
     borderWidth: 2,
     borderColor: "#fff",
   },
   initialsContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: "#4caf50",
     justifyContent: "center",
     alignItems: "center",
@@ -59,13 +65,24 @@ const styles = StyleSheet.create({
   initialsText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 13,
+    fontSize: 14,
   },
   name: {
     fontSize: 10,
     color: "#fff",
     marginTop: 2,
     textAlign: "center",
+  },
+  greenDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "limegreen",
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
 });
 

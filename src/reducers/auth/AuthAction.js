@@ -754,6 +754,24 @@ export const fetchNotifications = (childId) => async (dispatch) => {
     dispatch({ type: FETCH_NOTIFICATIONS_FAILURE, payload: error.message });
   }
 };
+// notification as seen
+export const markNotificationAsSeen = (userId, notificationId) => async (dispatch) => {
+  try {
+    await fetch(`${API_URL}/notifications/child/seen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, notification_id: notificationId })
+    });
+
+    // Pas besoin de fetch complet ! On marque directement dans Redux
+    dispatch({
+      type: "MARK_NOTIFICATION_AS_SEEN",
+      payload: notificationId
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors du marquage comme lu :", error.message);
+  }
+};
 
 // fetch manuel by level and videos by mmanuel for BooksScreen 
 
@@ -938,30 +956,31 @@ export const fetchMeetingsByLevel = (levelId) => async (dispatch) => {
   }
 };
 
-// 🔹 Fetch Reservations by User ID
+// 🔹 Fetch Reservations by User ID CORRIGÉ
 export const fetchReservationsByUserId = (userId) => async (dispatch) => {
   dispatch({ type: FETCH_RESERVATIONS_REQUEST });
 
   try {
-      const token = await AsyncStorage.getItem("childToken");
-      const response = await fetch(`${API_URL}/meetings/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-      });
+    const token = await AsyncStorage.getItem("tokenChild"); // ✅ CORRIGÉ ici
 
-      const data = await response.json();
+    const response = await fetch(`${API_URL}/meetings/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      if (response.ok) {
-          dispatch({ type: FETCH_RESERVATIONS_SUCCESS, payload: data });
-      } else {
-          dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: data.error });
-      }
+    const data = await response.json();
+    console.log("📥 [Réservations récupérées] :", JSON.stringify(data, null, 2));
+
+    if (response.ok) {
+      // ✅ Assure-toi que `data` est bien directement un tableau
+      dispatch({ type: FETCH_RESERVATIONS_SUCCESS, payload: Array.isArray(data) ? data : data.reservations });
+    } else {
+      dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: data.error || "Erreur lors de la récupération." });
+    }
   } catch (error) {
-      dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: error.message });
+    console.error("❌ [Erreur Fetch Reservations]:", error);
+    dispatch({ type: FETCH_RESERVATIONS_FAILURE, payload: error.message || "Erreur réseau" });
   }
 };
-
-
-
 // 🔹 Update Reservation
 export const updateReservation = (reservationId, updateData) => async (dispatch) => {
     dispatch({ type: UPDATE_RESERVATION_REQUEST });
@@ -1030,84 +1049,46 @@ export const reserveMeeting = (meetingData, token) => async (dispatch) => {
   dispatch({ type: "RESERVE_MEETING_REQUEST" });
 
   try {
-      // 🔍 Adding sale_id if it exists in the meetingData
-      const meetingDataWithSale = {
-          ...meetingData,
-          sale_id: meetingData.sale_id || meetingData.meeting_id  // Use sale_id if available, otherwise fallback to meeting_id
-      };
-      
-      console.log("📦 [Payload envoyé au backend pour la réservation] :", JSON.stringify(meetingDataWithSale, null, 2));
+    const meetingDataWithSale = {
+      ...meetingData,
+      sale_id: meetingData.sale_id || meetingData.meeting_id
+    };
 
-      const response = await fetch(`${API_URL}/meetings/reserve`, {
-          method: 'POST',
-          headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(meetingDataWithSale)
-      });
+    const response = await fetch(`${API_URL}/meetings/reserve`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(meetingDataWithSale)
+    });
 
-      const data = await response.json();
-      console.log("📥 [Réponse du serveur - Réservation] :", JSON.stringify(data, null, 2));
+    const data = await response.json();
 
-      if (response.ok) {
-          dispatch({ 
-              type: "RESERVE_MEETING_SUCCESS", 
-              payload: data 
-          });
-
-          // ✅ Reset reservationSuccess flag after a short delay (to avoid infinite alerts)
-          setTimeout(() => {
-              dispatch({ type: "RESET_RESERVATION_SUCCESS" });
-          }, 1000);
-      } else {
-          // If the first attempt fails, try without sale_id
-          if (data.message && (data.message.includes("sale_id") || data.message.includes("Vente non trouvée"))) {
-              
-              // Try again without sale_id
-              const retryPayload = { ...meetingData };
-              
-              const retryResponse = await fetch(`${API_URL}/meetings/reserve`, {
-                  method: 'POST',
-                  headers: { 
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify(retryPayload)
-              });
-              
-              const retryData = await retryResponse.json();
-              
-              if (retryResponse.ok) {
-                  dispatch({ 
-                      type: "RESERVE_MEETING_SUCCESS", 
-                      payload: retryData 
-                  });
-
-                  // ✅ Reset reservationSuccess flag after a short delay
-                  setTimeout(() => {
-                      dispatch({ type: "RESET_RESERVATION_SUCCESS" });
-                  }, 1000);
-              } else {
-                  const errorMessage = retryData.message || retryData.error || "Erreur inconnue";
-                  dispatch({ 
-                      type: "RESERVE_MEETING_FAILURE", 
-                      payload: errorMessage 
-                  });
-              }
-          } else {
-              const errorMessage = data.message || data.error || "Erreur inconnue";
-              dispatch({ 
-                  type: "RESERVE_MEETING_FAILURE", 
-                  payload: errorMessage 
-              });
-          }
-      }
-  } catch (error) {
+    if (response.ok) {
       dispatch({ 
-          type: "RESERVE_MEETING_FAILURE", 
-          payload: error.message || "Erreur de connexion au serveur" 
+        type: "RESERVE_MEETING_SUCCESS", 
+        payload: data 
       });
+
+      // 🔥 ici le plus important
+      dispatch(fetchMeetingById(meetingData.meeting_id));
+
+      setTimeout(() => {
+        dispatch({ type: "RESET_RESERVATION_SUCCESS" });
+      }, 1000);
+    } else {
+      const errorMessage = data.message || data.error || "Erreur inconnue";
+      dispatch({ 
+        type: "RESERVE_MEETING_FAILURE", 
+        payload: errorMessage 
+      });
+    }
+  } catch (error) {
+    dispatch({ 
+      type: "RESERVE_MEETING_FAILURE", 
+      payload: error.message || "Erreur de connexion au serveur"
+    });
   }
 };
 
@@ -1278,3 +1259,53 @@ export const fetchCart = () => async (dispatch) => {
     dispatch({ type: CART_FAILURE, payload: error.message });
   }
 };
+
+// adding personnal photo to the parent on parentInfo screen 
+export const uploadParentAvatar = (formData) => async (dispatch, getState) => {
+  try {
+    const token = getState().auth.authToken;
+    const response = await fetch(`${API_URL}/avatar/add`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // ✅ Mettez à jour le store Redux (option 1 : refetch user)
+      dispatch(fetchParentInfo());
+
+      // ✅ ou option 2 : mettre à jour directement
+      // dispatch({ type: "FETCH_PARENT_INFO_SUCCESS", payload: { ...getState().auth.parentInfo, avatar: data.avatar } });
+    } else {
+      console.error("Erreur upload avatar :", data.error);
+    }
+  } catch (error) {
+    console.error("Erreur upload avatar :", error.message);
+  }
+};
+// // adding personnal image to kid 
+// export const uploadKidAvatar = (kidId, formData) => async (dispatch, getState) => {
+//   const token = await AsyncStorage.getItem("token");
+//   try {
+//     const response = await fetch(`${API_URL}/enfants/avatar/${kidId}`, {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: formData,
+//     });
+
+//     const data = await response.json();
+//     if (response.ok) {
+//       dispatch(fetchChildren());
+//     } else {
+//       console.error("Erreur avatar enfant:", data.error);
+//     }
+//   } catch (error) {
+//     console.error("Erreur uploadKidAvatar:", error);
+//   }
+// };
