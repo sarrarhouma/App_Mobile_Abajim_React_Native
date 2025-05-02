@@ -7,13 +7,18 @@ import {
   TextInput,
   ScrollView,
   Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
 import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { subscribeToPack } from "../reducers/auth/AuthAction";
 
 const SubscriptionScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [paymentProof, setPaymentProof] = useState(null);
   const [phone, setPhone] = useState("");
@@ -32,6 +37,25 @@ const SubscriptionScreen = () => {
     }
   };
 
+  const handleSubscribe = () => {
+    if (!selectedPayment) {
+      Alert.alert("❌ خطأ", "الرجاء اختيار طريقة الدفع.");
+      return;
+    }
+
+    if (selectedPayment === "cash" && (!phone || !address)) {
+      Alert.alert("❌ خطأ", "يرجى ملء رقم الهاتف والعنوان.");
+      return;
+    }
+
+    if (selectedPayment === "bank" && !paymentProof) {
+      Alert.alert("❌ خطأ", "يرجى رفع إثبات الدفع.");
+      return;
+    }
+
+    dispatch(subscribeToPack(selectedPayment, phone, address, paymentProof, navigation));
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -43,11 +67,15 @@ const SubscriptionScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
         {/* Pack */}
         <View style={styles.packContainer}>
-          <Image source={require("../../assets/images/2151103639-removebg-preview.png")} style={styles.packImage} />
-          <Text style={styles.packTitle}>عرض الكرطابلة - إشتراك كامل في الكتب المدرسية و الدروس الإضافية  📚</Text>
+          <Image
+            source={require("../../assets/images/2151103639-removebg-preview.png")}
+            style={styles.packImage}
+          />
+          <Text style={styles.packTitle}>
+          عرض الكرطابلة - إشتراك كامل في الكتب المدرسية  📚
+          </Text>
           <View style={styles.priceContainer}>
             <Text style={styles.oldPrice}>120 د.ت</Text>
             <Text style={styles.newPrice}>80 د.ت</Text>
@@ -64,9 +92,8 @@ const SubscriptionScreen = () => {
           >
             <Text style={styles.paymentTitle}>💳 الدفع عند الاستلام</Text>
             <Text style={styles.paymentDescription}>
-              يمكنك الدفع عند استلام بطاقة إشتراك "أبجيم" والوصول لجميع الدروس الإضافية والكتب المدرسية بسهولة.
+              يمكنك الدفع عند استلام بطاقة إشتراك "أبجيم" والوصول لجميع الكتب المدرسية بسهولة.
             </Text>
-
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -77,38 +104,18 @@ const SubscriptionScreen = () => {
             <Text style={styles.paymentDescription}>
               قم بتحويل المبلغ إلى حساب "أبجيم"، ثم قم برفع إثبات الدفع لإتمام الإشتراك.
             </Text>
-
           </TouchableOpacity>
         </View>
 
         {/* Info selon choix */}
         {selectedPayment === "cash" && (
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              📦 سيتم تسليم بطاقة الإشتراك إلى عنوانك، والدفع يتم عند الإستلام .
-            </Text>
-          </View>
-        )}
-
-        {selectedPayment === "bank" && (
-          <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}> 📄 معلومات التحويل البنكي </Text>
-            <Text style={styles.bankDetails}>اسم الحساب: SOCIETE ABAJIM</Text>
-            <Text style={styles.bankDetails}>RIB: 04204067008666779780</Text>
-            <Text style={styles.bankDetails}>البنك: البنك التجاري</Text>
-
-            <TouchableOpacity onPress={handleUploadProof} style={styles.uploadButton}>
-              <Ionicons name="cloud-upload" size={24} color="#0097A7" />
-              <Text style={styles.uploadButtonText}>
-                {paymentProof ? "✅ تم تحميل الملف" : "ارفع إثبات الدفع"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Formulaire adresse + téléphone que pour cash */}
-        {selectedPayment === "cash" && (
           <>
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>
+                📦 سيتم تسليم بطاقة الإشتراك إلى عنوانك، والدفع يتم عند الإستلام .
+              </Text>
+            </View>
+
             <Text style={styles.sectionTitle}>معلومات الاتصال</Text>
 
             <View style={styles.formContainer}>
@@ -131,11 +138,26 @@ const SubscriptionScreen = () => {
           </>
         )}
 
+        {selectedPayment === "bank" && (
+          <View style={styles.infoBox}>
+            <Text style={styles.infoTitle}> 📄 معلومات التحويل البنكي </Text>
+            <Text style={styles.bankDetails}>اسم الحساب: SOCIETE ABAJIM</Text>
+            <Text style={styles.bankDetails}>RIB: 04204067008666779780</Text>
+            <Text style={styles.bankDetails}>البنك: البنك التجاري</Text>
+
+            <TouchableOpacity onPress={handleUploadProof} style={styles.uploadButton}>
+              <Ionicons name="cloud-upload" size={24} color="#0097A7" />
+              <Text style={styles.uploadButtonText}>
+                {paymentProof ? "✅ تم تحميل الملف" : "ارفع إثبات الدفع"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Bouton confirmer */}
-        <TouchableOpacity style={styles.confirmButton}>
+        <TouchableOpacity style={styles.confirmButton} onPress={handleSubscribe}>
           <Text style={styles.confirmButtonText}>تأكيد الإشتراك</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </View>
   );

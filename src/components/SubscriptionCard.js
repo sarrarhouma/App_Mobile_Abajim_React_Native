@@ -41,7 +41,7 @@ const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
 
           {/* Titre du pack */}
           <Text style={styles.packTitle}>
-            عرض الكرطابلة - اشتراك كامل للكتب المدرسية و الدروس الإضافية 📚
+            عرض الكرطابلة - اشتراك كامل للكتب المدرسية 📚
           </Text>
 
           {/* Prix */}
@@ -52,7 +52,7 @@ const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
 
           {/* Bouton d'abonnement */}
           <TouchableOpacity style={styles.btn} onPress={handleSubscribe}>
-            <Text style={styles.btnText}>ابدأ الآن</Text>
+            <Text style={styles.btnText}>إشترك الآن</Text>
           </TouchableOpacity>
         </LinearGradient>
       </Animated.View>

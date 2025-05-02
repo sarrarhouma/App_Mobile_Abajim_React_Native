@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchWebinarsByLevel } from "../reducers/auth/AuthAction";
 import { Video } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
+import API_BASE_URL from "../utils/Config";
 
 const WebinarDetailScreen = () => {
   const route = useRoute();
@@ -24,6 +25,7 @@ const WebinarDetailScreen = () => {
 
   const [expandedChapter, setExpandedChapter] = useState(null);
   const [activeTab, setActiveTab] = useState("content");
+  const [quizzes, setQuizzes] = useState([]);
 
   const webinar = webinars.find((w) => w.id === webinarId) || null;
 
@@ -32,6 +34,25 @@ const WebinarDetailScreen = () => {
       dispatch(fetchWebinarsByLevel(activeChild.level_id));
     }
   }, [dispatch, webinar, activeChild, isLoading]);
+
+  useEffect(() => {
+    if ((!webinar || !webinar.chapters) && webinarId) {
+      dispatch(fetchWebinarById(webinarId)); // À implémenter si besoin
+    }
+  }, [webinarId, webinar]);
+
+  // 🔹 Fetch quizzes
+  useEffect(() => {
+    if (webinarId) {
+      fetch(`${API_BASE_URL}/quizzes?webinar_id=${webinarId}`)
+        .then(response => response.json())
+        .then(data => setQuizzes(data))
+        .catch(err => {
+          console.log("Erreur lors du chargement des quizzes", err);
+          setQuizzes([]);
+        });
+    }
+  }, [webinarId]);
 
   const getInitials = (fullName) => {
     if (!fullName) return "؟";
@@ -81,27 +102,23 @@ const WebinarDetailScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* 🖼 Image de couverture + titre */}
       <View style={styles.headerContainer}>
         <Image
           source={{ uri: `https://www.abajim.com/${webinar.image_cover}` }}
           style={styles.headerImage}
         />
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-    <Ionicons name="arrow-back-circle" size={36} color="#fff" />
-  </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back-circle" size={36} color="#fff" />
+        </TouchableOpacity>
         <View style={styles.overlayTitle}>
-        <Text style={styles.headerTitle}>
+          <Text style={styles.headerTitle}>
             {webinar.translations?.[0]?.title || webinar.slug || "عنوان غير متوفر"}
           </Text>
-
         </View>
       </View>
 
-      {/* 👨‍🏫 Carte enseignant */}
       <View style={styles.teacherCardWrapper}>{renderTeacherCard()}</View>
 
-      {/* 🧭 Onglets */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "quiz" && styles.activeTab]}
@@ -123,7 +140,6 @@ const WebinarDetailScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ Contenu */}
       {activeTab === "content" && (
         chapters.length === 0 ? (
           <View style={styles.emptyState}>
@@ -194,12 +210,33 @@ const WebinarDetailScreen = () => {
         </View>
       )}
 
-      {activeTab === "quiz" && (
-        <View style={styles.contentBox}>
-          <Image source={require("../../assets/icons/no_quizz.png")} style={styles.emptyIllustration} />
-          <Text style={styles.noVideoText}>🚀 لا يوجد تحديات متاحة بعد</Text>
-        </View>
-      )}
+{activeTab === "quiz" && (
+  <View style={styles.contentBox}>
+    {quizzes.length > 0 ? (
+      quizzes.map((quiz) => (
+        <TouchableOpacity
+          key={quiz.id}
+          onPress={() => navigation.navigate("QuizScreen", { quizId: quiz.id })}
+          style={styles.quizCard}
+        >
+          <Text style={[styles.quizTitle, { textAlign: "right", writingDirection: "rtl" }]}>
+            🎯 {quiz.translations?.[0]?.title || quiz.title}
+          </Text>
+          <Text style={[styles.startQuiz, { textAlign: "right", writingDirection: "rtl" }]}>
+            ▶️ ابدأ الاختبار
+          </Text>
+        </TouchableOpacity>
+      ))
+    ) : (
+      <>
+        <Image source={require("../../assets/icons/no_quizz.png")} style={styles.emptyIllustration} />
+        <Text style={[styles.noVideoText, { textAlign: "right", writingDirection: "rtl" }]}>
+          🚀 لا يوجد تحديات متاحة بعد
+        </Text>
+      </>
+    )}
+  </View>
+)}
     </ScrollView>
   );
 };
@@ -208,106 +245,35 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { marginTop: 10, color: "#888" },
-
   headerContainer: { position: "relative" },
   headerImage: { width: "100%", height: 280, resizeMode: "cover" },
-  backButton: {
-    position: "absolute", top: 45, left: 15,
- padding: 5, borderRadius: 5
-  },
-  overlayTitle: {
-    position: "absolute",
-    top: 55,
-    right: 20, 
-    backgroundColor: "rgba(255, 255, 255, 0.8)", 
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 30, 
-    elevation: 4, 
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1F3B64", // bleu foncé pour rester professionnel
-    textAlign: "center",
-  },
-
-  teacherCardWrapper: {
-    paddingHorizontal: 16,
-    marginTop: -75,
-    zIndex: 20,
-  },
-  teacherCard: {
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  teacherAvatar: {
-    width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: "#0097A7"
-  },
-  initialsWrapper: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: "#0097A7", justifyContent: "center", alignItems: "center"
-  },
+  backButton: { position: "absolute", top: 45, left: 15, padding: 5, borderRadius: 5 },
+  overlayTitle: { position: "absolute", top: 55, right: 20, backgroundColor: "rgba(255, 255, 255, 0.8)", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 30 },
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#1F3B64", textAlign: "center" },
+  teacherCardWrapper: { paddingHorizontal: 16, marginTop: -75, zIndex: 20 },
+  teacherCard: { backgroundColor: "#fff", flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 12, elevation: 3 },
+  teacherAvatar: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: "#0097A7" },
+  initialsWrapper: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#0097A7", justifyContent: "center", alignItems: "center" },
   initialsText: { color: "#FFF", fontSize: 18, fontWeight: "bold" },
   teacherDetails: { flex: 1, marginHorizontal: 15 },
   teacherLabel: { fontSize: 12, color: "#999", textAlign: "right" },
   teacherName: { fontSize: 16, fontWeight: "bold", color: "#1F3B64", textAlign: "right" },
-
-  tabsContainer: {
-    flexDirection: "row", justifyContent: "space-around",
-    backgroundColor: "#0097A7", paddingVertical: 10
-  },
+  tabsContainer: { flexDirection: "row", justifyContent: "space-around", backgroundColor: "#0097A7", paddingVertical: 10 },
   tab: { paddingVertical: 10, paddingHorizontal: 20 },
   activeTab: { borderBottomWidth: 3, borderBottomColor: "white" },
   tabText: { color: "white", fontSize: 16, fontWeight: "bold" },
-
-  scrollContent: { paddingVertical: 20 },
-
-  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 5,    marginTop: 20, },
-  chapterHeader: {
-    flexDirection: "row", justifyContent: "space-between",
-    backgroundColor: "#E0E0E0", padding: 15, borderRadius: 10
-  },
-  chapterTitle: {
-    fontSize: 18, fontWeight: "bold", color: "#1F3B64",
-    textAlign: "center", flex: 1
-  },
+  chapterContainer: { width: "90%", alignSelf: "center", marginBottom: 5, marginTop: 20 },
+  chapterHeader: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#E0E0E0", padding: 15, borderRadius: 10 },
+  chapterTitle: { fontSize: 18, fontWeight: "bold", color: "#1F3B64", textAlign: "center", flex: 1 },
   videoContainer: { marginTop: 15 },
   videoPlayer: { width: "100%", height: 220, borderRadius: 10 },
-
-  contentBox: {
-    width: "90%", alignSelf: "center", backgroundColor: "#FFF",
-    padding: 15, borderRadius: 10, elevation: 5, marginBottom: 15
-  },
+  contentBox: { width: "90%", alignSelf: "center", backgroundColor: "#FFF", padding: 15, borderRadius: 10, elevation: 5, marginBottom: 15 },
   documentText: { fontSize: 16, color: "#333", textAlign: "right" },
   noVideoText: { textAlign: "center", color: "#888", marginTop: 10 },
-  emptyIllustration: {
-    width: 200,
-    height: 200,
-    alignSelf: "center",
-    marginBottom: 10,
-    resizeMode: "contain"
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
-  emptyImage: {
-    width: 220,
-    height: 200,
-    marginBottom: 15,
-  },
+  emptyIllustration: { width: 200, height: 200, alignSelf: "center", marginBottom: 10, resizeMode: "contain" },
+  quizCard: { padding: 15, backgroundColor: "#E8F5E9", marginBottom: 10, borderRadius: 10 },
+  quizTitle: { fontSize: 18, color: "#1F3B64", fontWeight: "bold" },
+  startQuiz: { fontSize: 14, color: "#0097A7", marginTop: 5, textAlign: "right" },
 });
 
 export default WebinarDetailScreen;

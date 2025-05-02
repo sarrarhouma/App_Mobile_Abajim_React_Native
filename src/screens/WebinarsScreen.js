@@ -11,21 +11,27 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { Logout, fetchWebinarsByLevel, fetchWebinarsByKeyword, toggleFavorite , fetchFavorites,  addToCart,
+import {
+  Logout,
+  fetchWebinarsByLevel,
+  fetchWebinarsByKeyword,
+  toggleFavorite,
+  fetchFavorites,
+  addToCart,
+  fetchCart,
   removeFromCart,
-  fetchCart,} from "../reducers/auth/AuthAction";
+} from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import CartIcon from "../components/CartIcon";
 import NotificationIcon from "../components/NotificationIcon";
 import FavoriteIcon from "../components/FavoriteIcon";
+import Modal from "react-native-modal";
 
 const getInitials = (fullName) => {
   if (!fullName) return "؟";
   const names = fullName.trim().split(" ");
-  return names.length >= 2
-    ? (names[0][0] + names[1][0]).toUpperCase()
-    : names[0].slice(0, 2).toUpperCase();
+  return names.length >= 2 ? (names[0][0] + names[1][0]).toUpperCase() : names[0].slice(0, 2).toUpperCase();
 };
 
 const WebinarsScreen = () => {
@@ -34,8 +40,33 @@ const WebinarsScreen = () => {
 
   const children = useSelector((state) => state.auth.children);
   const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
-  const { webinars, loading , cartItems} = useSelector((state) => state.auth);
+  const { webinars, loading, cartItems } = useSelector((state) => state.auth);
   const [searchText, setSearchText] = useState("");
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedWebinar, setSelectedWebinar] = useState(null);
+
+  const showAccessModal = (webinar) => {
+    setSelectedWebinar(webinar);
+    setModalVisible(true);
+  };
+
+  const hideModal = () => {
+    setModalVisible(false);
+    setSelectedWebinar(null);
+  };
+
+  const handleAddToCart = () => {
+    if (selectedWebinar) {
+      dispatch(addToCart({ webinar_id: selectedWebinar.id })).then(() => {
+        dispatch(fetchCart());
+        hideModal();
+      });
+    }
+  };
+
+  const isInCart = (webinarId) => {
+    return cartItems?.some((item) => item.webinar_id === webinarId);
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -60,36 +91,12 @@ const WebinarsScreen = () => {
       dispatch(fetchWebinarsByLevel(activeChild.level_id));
     }
   }, [searchText]);
-  
 
-  useEffect(() => {
-    if (searchText.trim() === "") {
-      if (activeChild?.level_id) dispatch(fetchWebinarsByLevel(activeChild.level_id));
-    }
-  }, [searchText]);
-
-  const handleSearch = () => {
-    if (searchText.trim() && activeChild?.level_id) {
-      dispatch(searchWebinarsByKeyword(activeChild.level_id, searchText.trim()));
-    }
-  };
   useEffect(() => {
     dispatch(fetchCart());
     dispatch(fetchFavorites());
   }, [activeChild, dispatch]);
 
-  const handleToggleFavorite = async (webinarId) => {
-    const tokenChild = await AsyncStorage.getItem("tokenChild");
-    if (!tokenChild) {
-      return;
-    }
-
-    dispatch(toggleFavorite(webinarId)); // Appeler l'action toggleFavorite
-  };
-  const isInCart = (webinarId) => {
-    return cartItems?.some((item) => item.webinar_id === webinarId);
-  };
-  
   return (
     <View style={styles.container}>
       {loading ? (
@@ -102,18 +109,15 @@ const WebinarsScreen = () => {
           ListHeaderComponent={
             <>
               <View style={styles.header}>
-                {/* <ChildSwitcher /> */}
                 <View style={styles.headerBottom}>
                   <Text style={styles.title}> الدروس الإضافية</Text>
                   <View style={styles.headerIcons}>
-                  <NotificationIcon onPress={() => navigation.navigate("Settings", { screen: "Notifications" })} />
-                    <FavoriteIcon onPress={() =>  navigation.navigate("Settings", { screen: "Favorites" })} />                     
+                    <NotificationIcon onPress={() => navigation.navigate("Settings", { screen: "Notifications" })} />
+                    <FavoriteIcon onPress={() => navigation.navigate("Settings", { screen: "Favorites" })} />
                     <CartIcon onPress={() => navigation.navigate("CartScreen")} />
                   </View>
                 </View>
               </View>
-
-              {/* Search Bar */}
               <View style={styles.searchContainer}>
                 <TextInput
                   style={styles.searchInput}
@@ -123,17 +127,17 @@ const WebinarsScreen = () => {
                   textAlign="right"
                 />
                 <TouchableOpacity
-                style={styles.searchButton}
-                onPress={() => {
-                  if (searchText.trim() !== "") {
-                    dispatch(fetchWebinarsByKeyword(activeChild.level_id, searchText));
-                  } else {
-                    dispatch(fetchWebinarsByLevel(activeChild.level_id));
-                  }
-                }}
-              >
-                <Ionicons name="search" size={22} color="white" />
-              </TouchableOpacity>
+                  style={styles.searchButton}
+                  onPress={() => {
+                    if (searchText.trim() !== "") {
+                      dispatch(fetchWebinarsByKeyword(activeChild.level_id, searchText));
+                    } else {
+                      dispatch(fetchWebinarsByLevel(activeChild.level_id));
+                    }
+                  }}
+                >
+                  <Ionicons name="search" size={22} color="white" />
+                </TouchableOpacity>
               </View>
             </>
           }
@@ -141,54 +145,45 @@ const WebinarsScreen = () => {
             <View style={styles.webinarContainer}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => navigation.navigate("WebinarDetail", { webinarId: item.id })}
+                onPress={() => {
+                  if (item.isAccessible) {
+                    navigation.navigate("WebinarDetail", { webinarId: item.id });
+                  } else {
+                    showAccessModal(item);
+                  }
+                }}
               >
                 <View style={styles.webinarCard}>
-                  <Image
-                    source={{ uri: `https://www.abajim.com/${item.image_cover}` }}
-                    style={styles.webinarImage}
-                  />
+                  <Image source={{ uri: `https://www.abajim.com/${item.image_cover}` }} style={styles.webinarImage} />
                   <View style={styles.webinarDetails}>
-                  <Text style={styles.webinarTitle}>
-                  {item.translations?.[0]?.title || item.slug || "عنوان غير متوفر"}
-                </Text>
+                    <Text style={styles.webinarTitle}>
+                      {item.translations?.[0]?.title || item.slug || "عنوان غير متوفر"}
+                    </Text>
+
                     <View style={styles.infoContainer}>
                       {item.teacher?.avatar ? (
-                        <Image
-                          source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
-                          style={styles.teacherAvatar}
-                        />
+                        <Image source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }} style={styles.teacherAvatar} />
                       ) : (
                         <View style={styles.initialsCircle}>
                           <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
                         </View>
                       )}
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
-                      >
+                      <TouchableOpacity onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}>
                         <Text style={[styles.detailText, { textDecorationLine: "underline", color: "#0097A7" }]}>
                           {item.teacher?.full_name || "غير متوفر"}
                         </Text>
                       </TouchableOpacity>
                     </View>
-          
+
                     <View style={styles.infoContainer}>
                       <Ionicons name="time-outline" size={18} color="#0097A7" />
-                      <Text style={styles.detailText}>
-                        {item.duration ? `${item.duration} دقيقة` : "غير متوفر"}
-                      </Text>
+                      <Text style={styles.detailText}>{item.duration ? `${item.duration} دقيقة` : "غير متوفر"}</Text>
                     </View>
                     <View style={styles.infoContainer}>
                       <Ionicons name="cash-outline" size={18} color="#0097A7" />
-                      <Text style={styles.detailText}>
-                        {item.price ? `${item.price} د.ت` : "مجاني"}
-                      </Text>
+                      <Text style={styles.detailText}>{item.price ? `${item.price} د.ت` : "مجاني"}</Text>
                     </View>
-          
-                    <Text style={styles.webinarDescription} numberOfLines={2}>
-                      {item.description || "لا يوجد وصف متاح لهذا الدرس."}
-                    </Text>
-          
+
                     <TouchableOpacity
                       style={styles.favoriteButton}
                       onPress={() => dispatch(toggleFavorite(item.id))}
@@ -202,43 +197,68 @@ const WebinarsScreen = () => {
                         {item.isFavorite ? "إزالة من المفضلة" : "أضف إلى المفضلة"}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.cartButton,
-                        {
-                          backgroundColor: isInCart(item.id) ? "#818894" : "#1f3b64",
-                        },
-                      ]}
-                      onPress={() => {
-                        const itemInCart = cartItems?.find((i) => i.webinar_id === item.id);
-                        if (itemInCart) {
-                          dispatch(removeFromCart(itemInCart.id)).then(() => dispatch(fetchCart()));
-                        } else {
-                          dispatch(addToCart({ webinar_id: item.id })).then(() => dispatch(fetchCart()));
-                        }
-                      }}
-                    >
-                      <Ionicons name="cart" size={20} color="#fff" />
-                      <Text style={styles.cartButtonText}>
-                        {isInCart(item.id) ? "إزالة من السلة" : "أضف إلى السلة"}
-                      </Text>
-                    </TouchableOpacity>
-
-
+                    {item.price > 0 && !item.isAccessible && (
+                        <TouchableOpacity
+                          style={[
+                            styles.cartButton,
+                            isInCart(item.id) && { backgroundColor: "#e74c3c" }
+                          ]}
+                          onPress={() => {
+                            if (isInCart(item.id)) {
+                              // Si déjà dans le panier → retirer
+                              const itemInCart = cartItems.find((cartItem) => cartItem.webinar_id === item.id);
+                              if (itemInCart) {
+                                dispatch(removeFromCart(itemInCart.id)).then(() => dispatch(fetchCart()));
+                              }
+                            } else {
+                              // Si pas encore dans le panier → ajouter
+                              dispatch(addToCart({ webinar_id: item.id })).then(() => dispatch(fetchCart()));
+                            }
+                          }}
+                        >
+                          <Ionicons name={isInCart(item.id) ? "remove-circle" : "cart"} size={20} color="#fff" />
+                          <Text style={styles.cartButtonText}>
+                            {isInCart(item.id) ? "إزالة من السلة" : "أضف إلى السلة"}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                   </View>
                 </View>
               </TouchableOpacity>
             </View>
           )}
-          ListEmptyComponent={
-            <Text style={styles.noWebinarsText}>🚫 لا يوجد دروس فيديو متاحة لهذا المستوى</Text>
-          }
+          ListEmptyComponent={<Text style={styles.noWebinarsText}>🚫 لا يوجد دروس متاحة لهذا المستوى</Text>}
         />
       )}
+
+<Modal isVisible={isModalVisible} onBackdropPress={hideModal}>
+  <View style={styles.modalContainer}>
+    <View style={styles.iconCircle}>
+      <Ionicons name="lock-closed" size={40} color="#fff" />
+    </View>
+    <Text style={styles.modalTitle}> 🔒 هذا الدرس غير متاح مجانا </Text>
+    <Text style={styles.modalSubtitle}>
+      قم بإضافته إلى السلة لتفعيله والوصول إلى محتواه المميز 🎓
+    </Text>
+
+    <View style={styles.modalActions}>
+      <TouchableOpacity style={styles.confirmButton} onPress={handleAddToCart}>
+        <Ionicons name="cart" size={20} color="#fff" />
+        <Text style={styles.confirmText}>أضف إلى السلة الآن</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={hideModal}>
+        <Text style={styles.cancelText}>🚫 لا، شكراً</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
       <BottomNavigation />
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
@@ -410,6 +430,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginRight: 8,
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 10,
+  },
+  iconCircle: {
+    backgroundColor: "#e74c3c",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1f3b64",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 15,
+    color: "#555",
+    textAlign: "center",
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalActions: {
+    width: "100%",
+    alignItems: "center",
+  },
+  confirmButton: {
+    backgroundColor: "#1f3b64",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  confirmText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cancelText: {
+    fontSize: 14,
+    color: "#0097A7",
+    marginTop: 4,
   },
     
 });

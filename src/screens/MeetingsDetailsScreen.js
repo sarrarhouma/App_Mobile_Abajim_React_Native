@@ -100,9 +100,7 @@ const MeetingDetailsScreen = () => {
         await dispatch(reserveMeeting(payload, tokenChild));
       }
 
-      // 🔥 Refresh Meeting Data After Reservation
       await dispatch(fetchMeetingById(meeting.id));
-
       dispatch(addToCart({ reserve_meeting_id: meeting.id }));
       Alert.alert("نجاح", "تمت إضافة الحجز إلى السلة.");
       navigation.navigate("CartScreen");
@@ -149,43 +147,52 @@ const MeetingDetailsScreen = () => {
           <Text style={styles.priceText}>💰 السعر لكل حصة: {sessionPrice.toFixed(2)} د.ت</Text>
 
           <Text style={styles.sectionTitle}>📅 الحصص المتاحة :</Text>
-          {meeting.times.map((session) => {
-            const sessionDate = new Date(session.meet_date * 1000);
-            const sessionTimeStart = new Date(session.start_time * 1000);
-            const sessionTimeEnd = new Date(session.end_time * 1000);
-            const isPast = isPastSession(session);
-            const progress = (session.reserved_students / session.max_students) * 100;
 
-            return (
-              <TouchableOpacity
-                key={session.id}
-                style={[styles.sessionCard, isPast && { backgroundColor: "#ddd" }]}
-                disabled={isPast}
-                onPress={() => toggleSession(session.id)}
-              >
-                <View style={styles.sessionInfo}>
-                  <Text style={styles.sessionText}>📆 {sessionDate.toLocaleDateString()} - 🕒 {sessionTimeStart.toLocaleTimeString()} ➔ {sessionTimeEnd.toLocaleTimeString()}</Text>
-                  <Text style={styles.sessionText}>📚 {session.submaterial?.name || "بدون مادة فرعية"}</Text>
-                  <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBar, { width: `${progress}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}> {session.reserved_students || 0} / {session.max_students} طالب</Text>
-                </View>
+          {[...meeting.times]
+  .sort((a, b) => a.meet_date - b.meet_date)
+  .filter((session, index, array) => {
+    const now = new Date().getTime() / 1000;
+    const isPast = session.meet_date < now;
+    const pastSessionsBefore = array.slice(0, index).filter(s => s.meet_date < now).length;
+    return !isPast || pastSessionsBefore >= 2;
+  })
+  .map((session) => {
+    const sessionDate = new Date(session.meet_date * 1000);
+    const sessionTimeStart = new Date(session.start_time * 1000);
+    const sessionTimeEnd = new Date(session.end_time * 1000);
+    const isPast = isPastSession(session);
+    const progress = (session.reserved_students / session.max_students) * 100;
 
-                {isPast ? (
-                  <View style={styles.badgeCompleted}>
-                    <Text style={styles.badgeText}>مكتمل</Text>
-                  </View>
-                ) : (
-                  <Ionicons
-                    name={selectedSessions.includes(session.id) ? "checkbox" : "square-outline"}
-                    size={24}
-                    color={selectedSessions.includes(session.id) ? "#4CAF50" : "#aaa"}
-                  />
-                )}
-              </TouchableOpacity>
-            );
-          })}
+    return (
+      <TouchableOpacity
+        key={session.id}
+        style={[styles.sessionCard, isPast && { backgroundColor: "#ddd" }]}
+        disabled={isPast}
+        onPress={() => toggleSession(session.id)}
+      >
+        <View style={styles.sessionInfo}>
+          <Text style={styles.sessionText}>📆 {sessionDate.toLocaleDateString()} - 🕒 {sessionTimeStart.toLocaleTimeString()} ➔ {sessionTimeEnd.toLocaleTimeString()}</Text>
+          <Text style={styles.sessionText}>📚 {session.submaterial?.name || "بدون مادة فرعية"}</Text>
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${progress}%` }]} />
+          </View>
+          <Text style={styles.progressText}> {session.reserved_students || 0} / {session.max_students} طالب</Text>
+        </View>
+        {isPast ? (
+          <View style={styles.badgeCompleted}>
+            <Text style={styles.badgeText}>مكتمل</Text>
+          </View>
+        ) : (
+          <Ionicons
+            name={selectedSessions.includes(session.id) ? "checkbox" : "square-outline"}
+            size={24}
+            color={selectedSessions.includes(session.id) ? "#4CAF50" : "#aaa"}
+          />
+        )}
+      </TouchableOpacity>
+    );
+  })}
+
 
           <TouchableOpacity style={styles.reserveButton} onPress={handleReserve}>
             <Ionicons name="cart" size={22} color="#fff" style={{ marginLeft: 8 }} />

@@ -22,6 +22,7 @@ import TeacherScreen from "../screens/TeacherScreen";
 import MeetingsDetailsScreen from '../screens/MeetingsDetailsScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
 import CartScreen from '../screens/CartScreen';
+import QuizScreen from "../screens/QuizScreen";
 
 import { Init, fetchChildren } from "../reducers/auth/AuthAction";
 // 🟦 Smart UI Entry for Subscription
@@ -83,6 +84,7 @@ const AppNavigator = () => {
             <Stack.Screen name="MeetingsDetails" component={MeetingsDetailsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} options={{ headerShown: false }} />
             <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="QuizScreen" component={QuizScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

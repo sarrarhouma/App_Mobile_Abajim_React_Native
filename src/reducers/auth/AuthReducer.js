@@ -439,9 +439,17 @@ const authReducer = (state = initialState, action) => {
                 };
                   
         case "CART_FAILURE":
-                return { ...state, isLoading: false, error: action.payload };
+            return { ...state, isLoading: false, error: action.payload };
                   
+        case "SUBSCRIBE_REQUEST":
+            return { ...state, isLoading: true, error: null };
                   
+        case "SUBSCRIBE_SUCCESS":
+            return { ...state, isLoading: false, error: null };
+                  
+        case "SUBSCRIBE_FAILURE":
+            return { ...state, isLoading: false, error: action.payload };
+                                    
                   
         default:
             return state;

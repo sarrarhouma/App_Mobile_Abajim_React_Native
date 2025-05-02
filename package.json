@@ -10,7 +10,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.1.1",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-clipboard/clipboard": "^1.16.1",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.2.0",
@@ -18,36 +18,57 @@
     "@reduxjs/toolkit": "^2.5.1",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
     "expo": "~52.0.28",
     "expo-av": "~15.0.2",
     "expo-document-picker": "^13.0.3",
+    "expo-haptics": "^14.1.4",
     "expo-image-picker": "^16.0.6",
     "expo-linear-gradient": "^14.0.2",
     "expo-screen-orientation": "~8.0.4",
     "expo-status-bar": "~2.0.1",
     "jwt-decode": "^4.0.0",
     "react": "18.3.1",
-    "react-native": "0.76.6",
+    "react-native": "0.76.9",
     "react-native-calendars": "^1.1293.0",
     "react-native-draggable": "^3.3.0",
-    "react-native-gesture-handler": "^2.22.1",
+    "react-native-gesture-handler": "2.20.2",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-modal": "^14.0.0-rc.1",
     "react-native-orientation-locker": "^1.7.0",
     "react-native-otp-input": "^1.0.12",
     "react-native-otp-inputs": "^7.4.0",
     "react-native-progress": "^5.0.1",
-    "react-native-reanimated": "^3.16.7",
-    "react-native-safe-area-context": "^5.2.0",
-    "react-native-screens": "^4.6.0",
-    "react-native-svg": "^15.11.1",
+    "react-native-reanimated": "3.16.1",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "4.4.0",
+    "react-native-svg": "15.8.0",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-webview": "^13.13.2",
+    "react-native-webview": "13.12.5",
     "react-redux": "^9.2.0",
     "recyclerlistview": "^3.0.5",
+    "redux": "^4.2.1",
     "redux-devtools-extension": "^2.13.9"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "redux-devtools-extension",
+          "react-native-otp-inputs",
+          "react-native-otp-input",
+          "react-native-vector-icons",
+          "react-native-draggable",
+          "cors",
+          "jwt-decode",
+          "react-native-orientation-locker"
+        ],
+        "listUnknownPackages": false
+      }
+    }
   },
   "private": true
 }

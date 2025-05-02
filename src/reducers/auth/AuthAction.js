@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://42e8-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://ce4d-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
+import axios from 'axios';
 
 
 export const FETCH_CORRECTION_VIDEO_REQUEST = "FETCH_CORRECTION_VIDEO_REQUEST";
@@ -772,6 +773,15 @@ export const markNotificationAsSeen = (userId, notificationId) => async (dispatc
     console.error("❌ Erreur lors du marquage comme lu :", error.message);
   }
 };
+// delete notifications 
+export const deleteNotification = (userId, notificationId) => async (dispatch) => {
+  try {
+    await axios.delete(`${API_URL}/notifications/child/${userId}/${notificationId}`);
+    dispatch(fetchNotifications(userId)); // Refresh après suppression
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la notification :", error);
+  }
+};
 
 // fetch manuel by level and videos by mmanuel for BooksScreen 
 
@@ -1309,3 +1319,70 @@ export const uploadParentAvatar = (formData) => async (dispatch, getState) => {
 //     console.error("Erreur uploadKidAvatar:", error);
 //   }
 // };
+export const SUBSCRIBE_REQUEST = "SUBSCRIBE_REQUEST";
+export const SUBSCRIBE_SUCCESS = "SUBSCRIBE_SUCCESS";
+export const SUBSCRIBE_FAILURE = "SUBSCRIBE_FAILURE";
+
+// ✅ Nouvelle action pour souscrire au pack الكرطابلة
+export const subscribeToPack = (selectedPayment, phone, address, paymentProof, navigation) => {
+  return async (dispatch, getState) => {
+    dispatch({ type: SUBSCRIBE_REQUEST });
+
+    try {
+      const token = await AsyncStorage.getItem("token"); // ✅ Token parent
+      const activeChild = await AsyncStorage.getItem("activeChild");
+      
+      if (!token || !activeChild) {
+        throw new Error("Token ou enfant actif manquant.");
+      }
+
+      const enfant = JSON.parse(activeChild);
+
+      const formData = new FormData();
+      formData.append("subscribe_id", "3");
+      formData.append("amount", "80");
+      formData.append("tax", "0");
+      formData.append("payment_method", selectedPayment);
+      formData.append("enfant_id", enfant.id.toString());
+      
+      if (selectedPayment === "cash") {
+        formData.append("phone", phone);
+        formData.append("address", address);
+      }
+      
+      if (selectedPayment === "bank" && paymentProof) {
+        formData.append("proof_file", {
+          uri: paymentProof.uri,
+          type: paymentProof.mimeType || "image/jpeg", // ou "application/pdf"
+          name: paymentProof.name || "preuve.jpg",
+        });
+      }
+      
+      const response = await fetch(`${API_URL}/subscription/subscribe`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // pas de Content-Type ici ! fetch gère les boundaries automatiquement
+        },
+        body: formData,
+      });
+      
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resData.message || "Erreur lors de la souscription.");
+      }
+
+      dispatch({ type: SUBSCRIBE_SUCCESS });
+
+      Alert.alert("✅ نجاح", "تم تسجيل الإشتراك بنجاح.");
+      navigation.navigate("Books"); 
+
+    } catch (error) {
+      console.error("❌ Erreur abonnement:", error.message);
+      dispatch({ type: SUBSCRIBE_FAILURE, payload: error.message });
+      Alert.alert("❌ خطأ", error.message);
+    }
+  };
+};

@@ -4,7 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import BottomNavigation from "../components/BottomNavigation";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchNotifications, markNotificationAsSeen } from "../reducers/auth/AuthAction";
+import { fetchNotifications, markNotificationAsSeen,deleteNotification } from "../reducers/auth/AuthAction";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
+
 
 I18nManager.forceRTL(false);
 I18nManager.allowRTL(false);
@@ -15,7 +19,11 @@ const NotificationsScreen = () => {
   const activeChild = useSelector((state) => state.auth.activeChild);
   const notifications = useSelector((state) => state.auth.notifications);
   const loading = useSelector((state) => state.auth.isLoading);
-
+  const handleDeleteNotification = (notificationId) => {
+    if (activeChild?.id) {
+      dispatch(deleteNotification(activeChild.id, notificationId));
+    }
+  };
   useEffect(() => {
     if (activeChild?.id) {
       dispatch(fetchNotifications(activeChild.id));
@@ -31,14 +39,23 @@ const NotificationsScreen = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleNotificationClick(item)} activeOpacity={0.7}>
       <View style={styles.notificationItem}>
-        <Image source={require("../../assets/icons/notifications.png")} style={styles.notificationIcon} />
-        <View style={styles.notificationTextContainer}>
-          <Text style={styles.notificationText}>{item.message}</Text>
-          <Text style={styles.notificationTime}>
-            {item.statuses?.length > 0 && item.statuses[0].seen_at ? "✅ مقروء" : "🟢 جديد"}
-          </Text>
-        </View>
-      </View>
+  <Image source={require("../../assets/icons/notifications.png")} style={styles.notificationIcon} />
+
+  <View style={styles.notificationTextContainer}>
+    <Text style={styles.notificationText}>{item.message}</Text>
+    <Text style={styles.notificationTime}>
+  {item.created_at
+    ? `${dayjs.unix(item.created_at).fromNow()} —`
+    : "—"}{" "}
+  {item.statuses?.[0]?.seen_at ? "✅ مقروء" : "🟢 جديد"}
+</Text>
+  </View>
+
+  <TouchableOpacity onPress={() => handleDeleteNotification(item.id)} style={styles.deleteButton}>
+    <Ionicons name="close-circle" size={24} color="#d32f2f" />
+  </TouchableOpacity>
+</View>
+
     </TouchableOpacity>
   );
 
@@ -132,6 +149,10 @@ const styles = StyleSheet.create({
     marginTop: 50,
     fontSize: 16,
   },
+  deleteButton: {
+    marginLeft: 8,
+  },
+  
 });
 
 export default NotificationsScreen;
