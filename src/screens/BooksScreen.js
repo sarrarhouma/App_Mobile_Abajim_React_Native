@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { Logout, fetchManuelsByLevel, fetchVideoCounts } from "../reducers/auth/AuthAction";
+import { Logout, fetchManuelsByLevel, fetchVideoCounts,checkChildSubscription } from "../reducers/auth/AuthAction";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
 import CartIcon from "../components/CartIcon";
@@ -18,6 +18,10 @@ import SmartSubscriptionEntry from "../components/SmartSubscriptionEntry";
 import NotificationIcon from "../components/NotificationIcon";
 import FavoriteIcon from "../components/FavoriteIcon";
 import ActiveChildHeaderAvatar from "../components/ActiveChildHeaderAvatar";
+import ModalCardInDelivery from "../components/ModalCardInDelivery";
+import ModalBankVerification from "../components/ModalBankVerification";
+import { useState } from "react";
+
 const BooksScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -28,9 +32,31 @@ const BooksScreen = () => {
   const children = useSelector((state) => state.auth.children);
   const activeChild = useSelector((state) => state.auth.activeChild) || children[0];
 
+  // subscription modals 
+  const [showCardModal, setShowCardModal] = useState(false);
+const [showVirementModal, setShowVirementModal] = useState(false);
+
+// Afficher le bon modal après vérification de l'abonnement
+useEffect(() => {
+  if (subscription?.card_ordered && subscription?.card_status === "waiting") {
+    setShowCardModal(true);
+  } else if (subscription?.bank_transfer && subscription?.parent_transfer_status === "pending") {
+    setShowVirementModal(true);
+  }
+}, [subscription]);
+
   const handleOpenDocument = (documentUrl) => {
     navigation.navigate("DocumentScreen", { documentUrl });
   };
+ const subscription = useSelector((state) => state.auth.subscriptionInfo);
+  const handleSelectPayment = (method) => {
+    setSelectedPayment(method);
+  };
+
+    useEffect(() => {
+      
+      dispatch(checkChildSubscription());
+    }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -100,7 +126,10 @@ const BooksScreen = () => {
           }
         />
       )}
-<SmartSubscriptionEntry />
+      <ModalCardInDelivery visible={showCardModal} onClose={() => setShowCardModal(false)} />
+      <ModalBankVerification visible={showVirementModal} onClose={() => setShowVirementModal(false)} />
+
+        <SmartSubscriptionEntry/>
       <BottomNavigation />
     </View>
   );

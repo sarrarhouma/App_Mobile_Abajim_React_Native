@@ -8,8 +8,10 @@ import {
   Alert,
   Linking,
   ScrollView,
+  Button,
 } from "react-native";
 import { WebView } from "react-native-webview";
+
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import BottomNavigation from "../components/BottomNavigation";
@@ -27,6 +29,8 @@ const DocumentScreen = () => {
   const dispatch = useDispatch();
   const webViewRef = useRef(null);
   const [authToken, setAuthToken] = useState(null);
+  const [tokenChild, SetTokenChild] = useState(null);
+
   const [allowedUrl, setAllowedUrl] = useState(null);
 
   const documentData = useSelector((state) => state.auth.documentData);
@@ -39,9 +43,12 @@ const DocumentScreen = () => {
     }
 
     const getToken = async () => {
-      const token = await AsyncStorage.getItem("token");
-      if (token) {
-        setAuthToken(token);
+      //const token = await AsyncStorage.getItem("token");
+      const authToken = await AsyncStorage.getItem("tokenChild");
+
+      if (authToken) {
+        setAuthToken(authToken);
+
       }
     };
     getToken();
@@ -63,12 +70,29 @@ const DocumentScreen = () => {
   };
 
   useEffect(() => {
+   
+    console.log(authToken);
     if (correctionVideoUrl) {
       setAllowedUrl(correctionVideoUrl);
       Linking.openURL(correctionVideoUrl);
     }
   }, [correctionVideoUrl]);
-
+  const clearEverything = async () => {
+  await AsyncStorage.removeItem('authToken');
+  webViewRef.current.clearCache(true);
+    console.log("✅WebView cache");
+  };
+  const clearCookies = () => {
+    const script = `
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      true;
+    `;
+    webViewRef.current.injectJavaScript(script);
+    console.log("Cookies cleared");
+  };
+  
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
@@ -88,20 +112,34 @@ const DocumentScreen = () => {
         </View>
 
         {/* WebView Section */}
-        <View style={styles.webViewContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#0097A7" />
-          ) : documentData?.pathenfant ? (
-            <WebView
-              source={{
-                uri: documentData?.pathenfant,
-                headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-              }}
-              startInLoadingState
-              ref={webViewRef}
-              renderLoading={() => <ActivityIndicator size="large" color="#0097A7" />}
-              style={{ height: 600 }}
-              injectedJavaScript={`document.addEventListener("click", function(event) {
+         {/* WebView for Document Display */}
+      <View style={styles.webViewContainer}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#0097A7" />
+        ) : documentData?.pathenfant ? (
+          
+          <WebView
+          source={{
+            uri: documentData?.pathenfant,
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}, // ✅ Inject auth token
+          }}
+          startInLoadingState
+          ref={webViewRef}
+          renderLoading={() => <ActivityIndicator size="large" color="#0097A7" />}
+          style={{ flex: 1}}
+          injectedJavaScript={`
+            (function() {
+              const interval = setInterval(() => {
+                const navbar = document.getElementById('navbar');
+                if (navbar) {
+                  navbar.style.display = 'none';
+                  console.log("✅ Navbar supprimée !");
+                  clearInterval(interval);
+                }
+              }, 500); // toutes les 500ms → jusqu'à ce que navbar existe
+          
+              // Gestion des icônes
+              document.addEventListener("click", function(event) {
                 let target = event.target;
                 while (target) {
                   if (target.tagName === "IMG" && target.src.includes("red-icon")) {
@@ -112,16 +150,41 @@ const DocumentScreen = () => {
                   }
                   target = target.parentElement;
                 }
-              });`}
-              onMessage={onWebViewMessage}
-              onNavigationStateChange={(event) => {
-                const isDocument = event.url.startsWith(documentData?.pathenfant);
-                const isCorrectionVideo = event.url === allowedUrl;
-                if (isCorrectionVideo) return true;
-                if (!isDocument) return false;
-                return true;
-              }}
-            />
+              });
+          
+              true;
+            })();
+          `}
+          
+          onMessage={onWebViewMessage}
+          onNavigationStateChange={(event) => {
+            console.log("🌍 WebView Attempted Navigation:", event.url);
+          
+            const isDocument = event.url.startsWith(documentData?.pathenfant);
+            const isCorrectionVideo = event.url === allowedUrl;
+            console.log("🌍 correctionVideoUrl:", correctionVideoUrl);
+
+            const isAbajimInternal = event.url.startsWith("https://www.abajim.com/");
+          
+            if (isCorrectionVideo) {
+              console.log("✅ Allowed Video:", event.url);
+              return true;
+            }
+          
+            if (isDocument || isAbajimInternal) {
+              console.log("✅ Allowed internal navigation:", event.url);
+              return true;
+            }
+          
+            console.log("⛔ Navigation blocked:", event.url);
+            return false;
+          }}
+          
+        />
+  
+
+            
+
           ) : (
             <Text style={styles.errorText}>❌ فشل تحميل الوثيقة</Text>
           )}

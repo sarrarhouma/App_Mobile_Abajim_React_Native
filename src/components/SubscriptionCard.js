@@ -1,11 +1,15 @@
 import React, { useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, Animated } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { LinearGradient } from 'expo-linear-gradient'; // Dégradé
+import { LinearGradient } from 'expo-linear-gradient';
+import { useDispatch, useSelector } from "react-redux";
+import { checkChildSubscription } from "../reducers/auth/AuthAction";
 
 const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
   const navigation = useNavigation();
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const dispatch = useDispatch();
+  const subscription = useSelector((state) => state.auth.subscriptionInfo);
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -14,6 +18,19 @@ const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
       friction: 6,
     }).start();
   }, []);
+
+  // useEffect(() => {
+  //   dispatch(checkChildSubscription());
+  // }, []);
+
+  const isCardInDelivery = subscription?.card_ordered && subscription?.card_status !== "approved";
+  const isBankTransferPending = subscription?.bank_transfer && subscription?.parent_transfer_status === "pending";
+
+  const shouldHideCard = subscription?.subscription_active || isCardInDelivery || isBankTransferPending;
+
+  if (shouldHideCard) {
+    return null; 
+  }
 
   const handleSubscribe = () => {
     navigation.navigate("SubscriptionScreen");
@@ -28,29 +45,24 @@ const SubscriptionCard = ({ subscribe_id = 3, amount = 80, onClose }) => {
           end={{ x: 0, y: 1 }}
           style={styles.card}
         >
-          {/* Bouton de fermeture */}
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Text style={styles.closeText}>×</Text>
           </TouchableOpacity>
 
-          {/* Image du pack */}
           <Image
             source={require("../../assets/images/2151103639-removebg-preview.png")}
             style={styles.packImage}
           />
 
-          {/* Titre du pack */}
           <Text style={styles.packTitle}>
             عرض الكرطابلة - اشتراك كامل للكتب المدرسية 📚
           </Text>
 
-          {/* Prix */}
           <View style={styles.priceContainer}>
             <Text style={styles.oldPrice}>120 د.ت</Text>
             <Text style={styles.newPrice}>80 د.ت</Text>
           </View>
 
-          {/* Bouton d'abonnement */}
           <TouchableOpacity style={styles.btn} onPress={handleSubscribe}>
             <Text style={styles.btnText}>إشترك الآن</Text>
           </TouchableOpacity>
@@ -92,6 +104,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
+    zIndex: 999,
     backgroundColor: "#f5f5f5",
     width: 30,
     height: 30,

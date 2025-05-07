@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
-import { subscribeToPack } from "../reducers/auth/AuthAction";
+import { useDispatch, useSelector } from "react-redux";
+import { subscribeToPack, checkChildSubscription } from "../reducers/auth/AuthAction";
 
 const SubscriptionScreen = () => {
   const navigation = useNavigation();
@@ -23,6 +23,13 @@ const SubscriptionScreen = () => {
   const [paymentProof, setPaymentProof] = useState(null);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+
+  const subscription = useSelector((state) => state.auth.subscriptionInfo);
+
+  useEffect(() => {
+    dispatch(checkChildSubscription());
+  }, []);
 
   const handleSelectPayment = (method) => {
     setSelectedPayment(method);
@@ -53,12 +60,12 @@ const SubscriptionScreen = () => {
       return;
     }
 
+    // Ici tu peux aussi utiliser accessCode si besoin !
     dispatch(subscribeToPack(selectedPayment, phone, address, paymentProof, navigation));
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.goBack}>
           <Ionicons name="arrow-back" size={28} color="white" />
@@ -67,22 +74,18 @@ const SubscriptionScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Pack */}
         <View style={styles.packContainer}>
           <Image
             source={require("../../assets/images/2151103639-removebg-preview.png")}
             style={styles.packImage}
           />
-          <Text style={styles.packTitle}>
-          عرض الكرطابلة - إشتراك كامل في الكتب المدرسية  📚
-          </Text>
+          <Text style={styles.packTitle}>عرض الكرطابلة - إشتراك كامل في الكتب المدرسية 📚</Text>
           <View style={styles.priceContainer}>
             <Text style={styles.oldPrice}>120 د.ت</Text>
             <Text style={styles.newPrice}>80 د.ت</Text>
           </View>
         </View>
 
-        {/* Choix paiement */}
         <Text style={styles.sectionTitle}>طرق الدفع</Text>
 
         <View style={styles.paymentOptionsRow}>
@@ -92,7 +95,7 @@ const SubscriptionScreen = () => {
           >
             <Text style={styles.paymentTitle}>💳 الدفع عند الاستلام</Text>
             <Text style={styles.paymentDescription}>
-              يمكنك الدفع عند استلام بطاقة إشتراك "أبجيم" والوصول لجميع الكتب المدرسية بسهولة.
+              يمكنك الدفع عند استلام بطاقة إشتراك "أبجيم".
             </Text>
           </TouchableOpacity>
 
@@ -102,18 +105,15 @@ const SubscriptionScreen = () => {
           >
             <Text style={styles.paymentTitle}>🏦 تحويل بنكي أو بريدي</Text>
             <Text style={styles.paymentDescription}>
-              قم بتحويل المبلغ إلى حساب "أبجيم"، ثم قم برفع إثبات الدفع لإتمام الإشتراك.
+              قم بتحويل المبلغ، ثم ارفع إثبات الدفع لإتمام الإشتراك.
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Info selon choix */}
         {selectedPayment === "cash" && (
           <>
             <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
-                📦 سيتم تسليم بطاقة الإشتراك إلى عنوانك، والدفع يتم عند الإستلام .
-              </Text>
+              <Text style={styles.infoText}>📦 سيتم تسليم البطاقة إلى عنوانك والدفع عند الاستلام.</Text>
             </View>
 
             <Text style={styles.sectionTitle}>معلومات الاتصال</Text>
@@ -140,7 +140,7 @@ const SubscriptionScreen = () => {
 
         {selectedPayment === "bank" && (
           <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}> 📄 معلومات التحويل البنكي </Text>
+            <Text style={styles.infoTitle}>📄 معلومات التحويل البنكي</Text>
             <Text style={styles.bankDetails}>اسم الحساب: SOCIETE ABAJIM</Text>
             <Text style={styles.bankDetails}>RIB: 04204067008666779780</Text>
             <Text style={styles.bankDetails}>البنك: البنك التجاري</Text>
@@ -154,7 +154,19 @@ const SubscriptionScreen = () => {
           </View>
         )}
 
-        {/* Bouton confirmer */}
+        {subscription?.card_status === "approved" && (
+          <View style={styles.accessCodeContainer}>
+            <Text style={styles.sectionTitle}>📇 أدخل رمز البطاقة</Text>
+            <TextInput
+              placeholder="أدخل رمز البطاقة هنا"
+              placeholderTextColor="#aaa"
+              style={styles.input}
+              value={accessCode}
+              onChangeText={setAccessCode}
+            />
+          </View>
+        )}
+
         <TouchableOpacity style={styles.confirmButton} onPress={handleSubscribe}>
           <Text style={styles.confirmButtonText}>تأكيد الإشتراك</Text>
         </TouchableOpacity>
@@ -208,6 +220,7 @@ const styles = StyleSheet.create({
   uploadButtonText: { fontSize: 16, color: "#0097A7", marginLeft: 10 },
   formContainer: { marginBottom: 20 },
   input: { backgroundColor: "#f9f9f9", padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "#ddd", marginBottom: 15, textAlign: "right", fontSize: 16 },
+  accessCodeContainer: { backgroundColor: "#f0f8ff", padding: 15, borderRadius: 12, marginBottom: 20, borderWidth: 1, borderColor: "#ddd" },
   confirmButton: { backgroundColor: "#0097A7", padding: 15, borderRadius: 12, alignItems: "center", marginTop: 20 },
   confirmButtonText: { fontSize: 18, color: "#fff", fontWeight: "bold" },
 });

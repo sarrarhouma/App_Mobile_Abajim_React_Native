@@ -23,8 +23,9 @@ import MeetingsDetailsScreen from '../screens/MeetingsDetailsScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
 import CartScreen from '../screens/CartScreen';
 import QuizScreen from "../screens/QuizScreen";
+import SignUpTeacherScreen from "../screens/teacher/SignUpTeacherScreen";
 
-import { Init, fetchChildren } from "../reducers/auth/AuthAction";
+import { Init, fetchChild, fetchChildren } from "../reducers/auth/AuthAction";
 // 🟦 Smart UI Entry for Subscription
 import SmartSubscriptionEntry from "../components/SmartSubscriptionEntry";
 const Stack = createNativeStackNavigator();
@@ -38,15 +39,20 @@ const AppNavigator = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      await dispatch(Init());
+    
 
       if (token) {
+
+        await dispatch(fetchChild());
         await dispatch(fetchChildren()); // ✅ Ensure children are loaded
+
       }
+      await dispatch(Init());    
       setLoading(false);
     };
 
     initializeApp();
+    
   }, [dispatch, token, children.length]);
 
   if (loading) {
@@ -66,6 +72,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
             <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="SignUpTeacher" component={SignUpTeacherScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ForgetPasswordScreen" component={ForgetPasswordScreen} options={{ headerShown: false }} />
             <Stack.Screen name="VerificationScreen" component={VerificationScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} options={{ headerShown: false }}/>

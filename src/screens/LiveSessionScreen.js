@@ -113,22 +113,30 @@ const LiveSessionsScreen = () => {
                 </View>
 
                 <View style={styles.row}>
-                  <View style={styles.avatarWrapper}>
-                    {item.teacher?.avatar ? (
-                      <Image
-                        source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
-                        style={styles.teacherAvatar}
-                      />
-                    ) : (
-                      <View style={styles.initialsCircle}>
-                        <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.teacherInfo}>
-                    <Text style={styles.teacherName}>{item.teacher?.full_name || "غير متوفر"}</Text>
-                  </View>
-                </View>
+                <TouchableOpacity 
+                  style={styles.avatarWrapper}
+                  onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
+                >
+                  {item.teacher?.avatar ? (
+                    <Image
+                      source={{ uri: `https://www.abajim.com/${item.teacher.avatar}` }}
+                      style={styles.teacherAvatar}
+                    />
+                  ) : (
+                    <View style={styles.initialsCircle}>
+                      <Text style={styles.initialsText}>{getInitials(item.teacher?.full_name)}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.teacherInfo}
+                  onPress={() => navigation.navigate("Teacher", { teacherId: item.teacher?.id })}
+                >
+                  <Text style={styles.teacherName}>{item.teacher?.full_name || "غير متوفر"}</Text>
+                </TouchableOpacity>
+              </View>
+
 
                 <View style={styles.sessionHeader}>
                   <Ionicons name="calendar" size={20} color="#34395e" />

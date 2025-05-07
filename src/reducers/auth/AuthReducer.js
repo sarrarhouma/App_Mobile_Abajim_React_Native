@@ -32,7 +32,13 @@ const initialState = {
     saleError: null,
     orderSuccess: false,
     cartItems: [],
-    
+    child: null,
+    token: null,
+    isInitialized: false,
+    loadingSubscription: false,
+  subscriptionInfo: null, 
+  subscriptionError: null,
+  
 
 
 
@@ -165,7 +171,24 @@ const authReducer = (state = initialState, action) => {
                 authToken: action.payload.token, // ✅ Update token
                 children: action.payload.children || state.children, // ✅ Ensure children persist
             }; 
-
+            case "FETCH_ACTIVE_CHILD_SUCCESS":
+                return {
+                    ...state,
+                    activeChild: action.payload,
+                };
+    
+            case "FETCH_ACTIVE_CHILD_FAILURE":
+                return {
+                    ...state,
+                    activeChild: null,
+                };
+    
+            case "SET_ACTIVE_CHILD":
+                return {
+                    ...state,
+                    activeChild: action.payload,
+                };
+    
         case "UPDATE_CHILD_REQUEST":
             return {
                 ...state,
@@ -449,8 +472,50 @@ const authReducer = (state = initialState, action) => {
                   
         case "SUBSCRIBE_FAILURE":
             return { ...state, isLoading: false, error: action.payload };
-                                    
-                  
+        case "FETCH_CHILD_LOADING":
+            return {
+                  ...state,
+                  loading: true,
+                  error: null,
+            };
+          
+        case "FETCH_CHILD_SUCCESS":
+            return {
+                  ...state,
+                  loading: false,
+                  child: action.payload,
+                  error: null,
+            };
+          
+        case "FETCH_CHILD_ERROR":
+            return {
+                  ...state,
+                  loading: false,
+                  child: null,
+                  error: action.error,
+            };                            
+            case "INIT_DONE":
+                return { ...state, isInitialized: true };       
+                case "CHECK_SUBSCRIPTION_REQUEST":
+                    return {
+                      ...state,
+                      loadingSubscription: true,
+                      subscriptionError: null,
+                    };
+              
+                  case "CHECK_SUBSCRIPTION_SUCCESS":
+                    return {
+                      ...state,
+                      loadingSubscription: false,
+                      subscriptionInfo: action.payload, // 👈 Contient child_id, subscription_active, etc.
+                    };
+              
+                  case "CHECK_SUBSCRIPTION_FAILURE":
+                    return {
+                      ...state,
+                      loadingSubscription: false,
+                      subscriptionError: action.payload,
+                    };       
         default:
             return state;
     }

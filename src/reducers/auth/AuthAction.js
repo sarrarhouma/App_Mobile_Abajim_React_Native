@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export const API_URL = 'https://ce4d-196-179-217-114.ngrok-free.app/api'; 
+export const API_URL = 'https://db16-196-179-217-114.ngrok-free.app/api'; 
 import { Alert } from "react-native";
 import axios from 'axios';
 
@@ -8,7 +8,6 @@ export const FETCH_CORRECTION_VIDEO_REQUEST = "FETCH_CORRECTION_VIDEO_REQUEST";
 export const FETCH_CORRECTION_VIDEO_SUCCESS = "FETCH_CORRECTION_VIDEO_SUCCESS";
 export const FETCH_CORRECTION_VIDEO_FAILURE = "FETCH_CORRECTION_VIDEO_FAILURE";
 
-// register new user
 export const register = (fullName, mobile, password, role_id, navigation) => {
   return async (dispatch) => {
     dispatch({ type: "AUTH_LOADING" });
@@ -28,30 +27,30 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
           role_id, 
         }),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ Erreur HTTP:", response.status, errorData);
-        throw new Error(errorData.error || `HTTP Error: ${response.status}`);
+
+      const text = await response.text(); // 🔥 Toujours lire d'abord en texte
+
+      let resData;
+      try {
+        resData = JSON.parse(text); // ✅ Essayer de parser en JSON
+      } catch (err) {
+        throw new Error("La réponse du serveur n'est pas au format JSON : " + text);
       }
 
-      const resData = await response.json(); 
+      if (!response.ok) {
+        console.error("❌ Erreur HTTP:", response.status, resData);
+        throw new Error(resData.error || `HTTP Error: ${response.status}`);
+      }
+
       if (!resData.token) {
         throw new Error("Aucun token reçu. Vérifie le backend.");
       }
-
-
       Alert.alert("Succès", "Inscription réussie !");
-
-      // ✅ Store the token
       await AsyncStorage.setItem("token", resData.token);
-
-      // ✅ Update Redux Store with Token
       dispatch({
         type: "LOGIN_SUCCESS",
         payload: resData.token, 
       });
-
-      // ✅ Fetch children count immediately after registration
       const childrenResponse = await fetch(`${API_URL}/enfants`, {
         headers: {
           Authorization: `Bearer ${resData.token}`,
@@ -61,14 +60,20 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
         method: "GET",
       });
 
-      const childrenData = await childrenResponse.json();
-      // ✅ Update Redux Store with children data
+      const childrenText = await childrenResponse.text();
+      let childrenData;
+
+      try {
+        childrenData = JSON.parse(childrenText);
+      } catch (err) {
+        throw new Error("Impossible de lire les enfants : " + childrenText);
+      }
+
       dispatch({
         type: "FETCH_CHILDREN_SUCCESS",
         payload: childrenData,
       });
 
-      // ✅ Navigate after fetching children
       if (childrenData.length === 0) {
         navigation.reset({
           index: 0,
@@ -88,8 +93,6 @@ export const register = (fullName, mobile, password, role_id, navigation) => {
     }
   };
 };
-
-
 
 // 🔹 Login Action
 export const login = (mobile, password, navigation) => {
@@ -257,53 +260,110 @@ export const resetPassword = (mobile, newPassword, navigation) => async (dispatc
     };
   }; 
 
-  // 🔹 Vérification de l'état de connexion
+// export const Init = () => {
+//   return async (dispatch) => {
+//       try {
+//           const token = await AsyncStorage.getItem("token");
 
-  export const Init = () => {
+//           if (!token) {
+//               console.warn("⚠️ No token found, skipping initialization.");
+//               return;
+//           }
+
+//           dispatch({ type: "LOGIN_SUCCESS", payload: token });
+
+//           const childrenData = await AsyncStorage.getItem("children");
+//           const children = childrenData ? JSON.parse(childrenData) : [];
+//           const childString = await AsyncStorage.getItem("firstChild");
+//             const child = childString ? JSON.parse(childString) : null;
+//       console.log("child test",child)
+//         dispatch(setActiveChild(child));
+
+
+//           // Charger les enfants depuis AsyncStorage directement
+//           dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: children });
+
+//           const activeChildData = await AsyncStorage.getItem("activeChild");
+
+//           if (activeChildData) {
+//               dispatch({ type: "SET_ACTIVE_CHILD", payload: JSON.parse(activeChildData) });
+//           } else if (children.length > 0) {
+//               // Si pas encore d'activeChild mais des enfants, prendre le premier
+//               dispatch({ type: "SET_ACTIVE_CHILD", payload: children[0] });
+//               await AsyncStorage.setItem("activeChild", JSON.stringify(children[0]));
+//           }
+
+//       } catch (error) {
+//           console.error("❌ Error in Init function:", error.message);
+//       }
+//   };
+// };
+export const Init = () => {
+  return async (dispatch) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        console.warn("⚠️ No token found, skipping initialization.");
+        return;
+      }
+
+      // Authentifier le parent
+      dispatch({ type: "LOGIN_SUCCESS", payload: token });
+
+      // Charger les enfants
+      const childrenData = await AsyncStorage.getItem("children");
+      const children = childrenData ? JSON.parse(childrenData) : [];
+      dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: children });
+
+      // 🚨 Ne pas utiliser l'ancien activeChild stocké → toujours prendre le premier enfant si c'est une nouvelle session
+      let firstChild = null;
+
+      if (children.length > 0) {
+        firstChild = children[0];
+
+        // Sauvegarder dans AsyncStorage le nouveau enfant actif
+        await AsyncStorage.setItem("activeChild", JSON.stringify(firstChild));
+
+        // Définir le activeChild dans Redux
+        dispatch({ type: "SET_ACTIVE_CHILD", payload: firstChild });
+      }
+
+      // Charger le token de l'enfant actif
+      const tokenChild = await AsyncStorage.getItem("tokenChild");
+
+      if (tokenChild && firstChild) {
+        dispatch(fetchNotifications(tokenChild));
+        dispatch(fetchFavorites(tokenChild));
+        dispatch(fetchCart(tokenChild));
+      }
+
+    } catch (error) {
+      console.error("❌ Error in Init function:", error.message);
+    }
+  };
+};
+
+
+export const setActiveChild = (child) => {
     return async (dispatch) => {
-        try {
-            let token = await AsyncStorage.getItem("token");
+  
+      // ✅ Save the new token and active child
 
-            if (!token) {
-                console.warn("⚠️ No token found, skipping initialization.");
-                return;
-            }
+      await AsyncStorage.setItem("tokenChild", child.token);
 
-            dispatch({ type: "LOGIN_SUCCESS", payload: token });
-            let childrenData = await AsyncStorage.getItem("children");
-            let children = childrenData ? JSON.parse(childrenData) : [];
+      dispatch({ type: "FETCH_ACTIVE_CHILD_SUCCESS", payload: child });
+      dispatch({
+        type: "SWITCH_ACTIVE_CHILD",
+        payload: { 
+          child: child, 
+          token: child.token, 
+        },
+      });
 
-            if (!Array.isArray(children) || children.length === 0) {
-                console.warn("⚠️ No children found in AsyncStorage, fetching from API...");
+         await AsyncStorage.setItem("activeChild", JSON.stringify(child));
 
-                // ✅ Fetch from API if AsyncStorage is empty
-                const childrenResponse = await fetch(`${API_URL}/enfants`, {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (childrenResponse.ok) {
-                    const latestChildren = await childrenResponse.json();
-
-                    if (Array.isArray(latestChildren) && latestChildren.length > 0) {
-                        await AsyncStorage.setItem("children", JSON.stringify(latestChildren));
-                        dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: latestChildren });
-                    } else {
-                        console.warn("⚠️ No children found in backend.");
-                        dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: [] });
-                    }
-                } else {
-                    console.warn("⚠️ Failed to fetch children from backend.");
-                }
-            } else {
-                dispatch({ type: "FETCH_CHILDREN_SUCCESS", payload: children });
-            }
-        } catch (error) {
-            console.error("❌ Error in Init function:", error.message);
-        }
+         dispatch({ type: "SET_ACTIVE_CHILD", payload: child });
     };
 };
 
@@ -311,37 +371,45 @@ export const resetPassword = (mobile, newPassword, navigation) => async (dispatc
 // 🔹 Add Child Action
 export const addChild = (childData, navigation) => async (dispatch, getState) => {
   try {
-      const parentToken = await AsyncStorage.getItem("token"); // ✅ Always use the parent’s token
-      if (!parentToken) {
-          throw new Error("User is not authenticated.");
-      }
+    const parentToken = await AsyncStorage.getItem("token");
+    if (!parentToken) throw new Error("User is not authenticated.");
 
-      dispatch({ type: "AUTH_LOADING" });
-      
-      const response = await fetch(`${API_URL}/enfants/add`, {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${parentToken}`, // ✅ Ensures request is made as a parent
-          },
-          body: JSON.stringify(childData)
-      });
+    dispatch({ type: "AUTH_LOADING" });
 
-      const resData = await response.json();
-      
-      if (response.ok) {
-          dispatch({ type: "ADD_CHILD_SUCCESS", payload: resData.enfant });
+    const response = await fetch(`${API_URL}/enfants/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${parentToken}`,
+      },
+      body: JSON.stringify(childData),
+    });
 
-          navigation.navigate("Books");  // Redirect to books page after adding a child
-      } else {
-          console.error("❌ Failed to add child:", resData.error);
-          dispatch({ type: "ADD_CHILD_FAILURE", error: resData.error });
-      }
+    const contentType = response.headers.get("content-type");
+    let resData = null;
+
+    // ✅ Vérifier si la réponse est JSON avant de parser
+    if (contentType && contentType.includes("application/json")) {
+      resData = await response.json();
+    } else {
+      const text = await response.text();
+      throw new Error(text);  // 🚨 Provoquer une erreur avec le texte brut si ce n'est pas du JSON
+    }
+
+    if (response.ok) {
+      dispatch({ type: "ADD_CHILD_SUCCESS", payload: resData.enfant });
+      await AsyncStorage.setItem("tokenChild", resData.token);
+      navigation.navigate("Books");
+    } else {
+      console.error("❌ Failed to add child:", resData.error);
+      dispatch({ type: "ADD_CHILD_FAILURE", error: resData.error });
+    }
   } catch (error) {
-      console.error("❌ Error adding child:", error);
-      dispatch({ type: "ADD_CHILD_FAILURE", error: error.message });
+    console.error("❌ Error adding child:", error.message);
+    dispatch({ type: "ADD_CHILD_FAILURE", error: error.message });
   }
 };
+
 // ✅ **Update Child Action**
 export const updateChild = (childData, callback) => async (dispatch) => {
   dispatch({ type: "UPDATE_CHILD_REQUEST" });
@@ -463,9 +531,55 @@ export const fetchChildren = () => async (dispatch, getState) => {
       dispatch({ type: "FETCH_CHILDREN_FAILURE", error: "Failed to fetch children" });
   }
 };
+// ✅ Fetch Children (Updated to use the new `users` table)
+export const fetchChild = () => async (dispatch, getState) => {
+  try {
+    const parentToken = await AsyncStorage.getItem("token");
+
+    if (!parentToken) {
+      console.error("❌ Token missing.");
+      dispatch({ type: "FETCH_CHILD_ERROR", error: "Token missing" });
+      return;
+    }
+
+    dispatch({ type: "FETCH_CHILD_LOADING" });
+
+    const response = await fetch(`${API_URL}/enfants/first-child/3703`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${parentToken}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      console.log("✅ Child fetched:", data);
+
+      await AsyncStorage.setItem("firstChild", JSON.stringify(data));
+
+      dispatch({
+        type: "FETCH_CHILD_SUCCESS",
+        payload: data
+      });
+    } else {
+      console.error("❌ Failed to fetch child:", data.error);
+      dispatch({
+        type: "FETCH_CHILD_ERROR",
+        error: data.error || "Failed to fetch child"
+      });
+    }
+  } catch (error) {
+    console.error("❌ Error fetching child:", error.message);
+    dispatch({
+      type: "FETCH_CHILD_ERROR",
+      error: error.message || "An unexpected error occurred"
+    });
+  }
+};
 
 // fetching documents by manuel_id 
-
 export const fetchDocumentByManuelId = (manuelId) => {
   return async (dispatch) => {
     dispatch({ type: "DOCUMENT_LOADING" });
@@ -491,8 +605,8 @@ export const fetchDocumentByManuelId = (manuelId) => {
 export const switchChild = (child) => {
   return async (dispatch) => {
     try {
-
       const token = await AsyncStorage.getItem("token");
+
       if (!token) {
         throw new Error("User is not authenticated.");
       }
@@ -512,43 +626,40 @@ export const switchChild = (child) => {
         throw new Error(resData.error || "Failed to switch child.");
       }
 
-      await AsyncStorage.setItem("activeChildId", child.id.toString());
-      // ✅ Save the new token and active child
-      await AsyncStorage.setItem("tokenChild", resData.token);
+      // Save new activeChild and tokenChild
       await AsyncStorage.setItem("activeChild", JSON.stringify(resData.child));
+      await AsyncStorage.setItem("tokenChild", resData.token);
 
-      // ✅ Update Redux Store
+      // Update Redux
       dispatch({
-        type: "SWITCH_ACTIVE_CHILD",
-        payload: { 
-          child: resData.child, 
-          token: resData.token, 
-        },
+        type: "SET_ACTIVE_CHILD",
+        payload: resData.child,
       });
+
+      // Fetch updated children
       const response2 = await fetch(`${API_URL}/enfants`, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
-    });
-    const resData2 = await response2.json();
-      // ✅ Ensure children list is stored in AsyncStorage
+      });
+
+      const resData2 = await response2.json();
+
       if (resData2) {
         await AsyncStorage.setItem("children", JSON.stringify(resData2));
-        
-        // ✅ Update Redux Store with new children list
         dispatch({
           type: "FETCH_CHILDREN_SUCCESS",
           payload: resData2
         });
       }
-      } 
-    catch (error) {
+    } catch (error) {
       console.error("❌ Error switching child:", error.message);
     }
   };
 };
+
 
 // ✅ Fetch Correction Video with Authentication
 export const fetchCorrectionVideoUrl = (manuelId, icon, page) => async (dispatch) => {
@@ -884,6 +995,7 @@ export const toggleFavorite = (webinarId) => async (dispatch) => {
 export const fetchFavorites = () => async (dispatch) => {
   try {
     const tokenChild = await AsyncStorage.getItem("tokenChild"); 
+    
     if (!tokenChild) throw new Error("Utilisateur non authentifié.");
 
     const response = await fetch(`${API_URL}/likes/favorites`, {
@@ -894,12 +1006,12 @@ export const fetchFavorites = () => async (dispatch) => {
     });
 
     const data = await response.json();
-
     if (!response.ok) throw new Error("Erreur lors de la récupération des favoris");
 
     const favoritesIds = data.map((w) => w.id);
     dispatch({ type: FETCH_FAVORITES_SUCCESS, payload: favoritesIds });
   } catch (error) {
+    
     console.error("❌ Erreur fetchFavorites:", error.message);
   }
 };
@@ -1356,8 +1468,8 @@ export const subscribeToPack = (selectedPayment, phone, address, paymentProof, n
           type: paymentProof.mimeType || "image/jpeg", // ou "application/pdf"
           name: paymentProof.name || "preuve.jpg",
         });
-      }
-      
+      } 
+     // if   
       const response = await fetch(`${API_URL}/subscription/subscribe`, {
         method: "POST",
         headers: {
@@ -1383,6 +1495,48 @@ export const subscribeToPack = (selectedPayment, phone, address, paymentProof, n
       console.error("❌ Erreur abonnement:", error.message);
       dispatch({ type: SUBSCRIBE_FAILURE, payload: error.message });
       Alert.alert("❌ خطأ", error.message);
+    }
+  };
+};
+export const CHECK_SUBSCRIPTION_REQUEST = "CHECK_SUBSCRIPTION_REQUEST";
+export const CHECK_SUBSCRIPTION_SUCCESS = "CHECK_SUBSCRIPTION_SUCCESS";
+export const CHECK_SUBSCRIPTION_FAILURE = "CHECK_SUBSCRIPTION_FAILURE";
+
+export const checkChildSubscription = () => {
+  return async (dispatch) => {
+    dispatch({ type: CHECK_SUBSCRIPTION_REQUEST });
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const activeChild = await AsyncStorage.getItem("activeChild");
+
+      if (!token || !activeChild) {
+        throw new Error("Token ou enfant actif manquant.");
+      }
+
+      const enfant = JSON.parse(activeChild);
+
+      const response = await fetch(`${API_URL}/subscription/check-child-subscription/${enfant.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || "Erreur lors de la vérification de l'abonnement.");
+      }
+
+      dispatch({
+        type: CHECK_SUBSCRIPTION_SUCCESS,
+        payload: resData, // 👈 contient child_id, subscription_active, card_ordered, etc.
+      });
+    } catch (error) {
+      dispatch({
+        type: CHECK_SUBSCRIPTION_FAILURE,
+        payload: error.message,
+      });
     }
   };
 };

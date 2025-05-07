@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ImageBackground, Image,
+  StyleSheet, ImageBackground, Image,
   ActivityIndicator, Keyboard, TouchableWithoutFeedback, ScrollView
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "../reducers/auth/AuthAction";
+import { register } from "../../reducers/auth/AuthAction";
 
-export default function SignUpScreen({ navigation }) {
+export default function SignUpTeacherScreen({ navigation }) {
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,21 +21,48 @@ export default function SignUpScreen({ navigation }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!fullName || fullName.length < 6)
+
+    // Full Name validation
+    if (!fullName || fullName.trim().length < 6) {
       newErrors.fullName = "الاسم يجب أن يحتوي على 6 أحرف على الأقل.";
-    if (!mobile || !/^\d{8}$/.test(mobile))
-      newErrors.mobile = "الرقم يجب أن يحتوي على 8 أرقام.";
-    if (!password || password.length < 6)
+    }
+
+    // Email validation
+    if (!email) {
+      newErrors.email = "البريد الإلكتروني مطلوب.";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "البريد الإلكتروني غير صالح.";
+    }
+
+    // Mobile validation
+    if (!mobile) {
+      newErrors.mobile = "رقم الهاتف مطلوب.";
+    } else if (!/^\d{8}$/.test(mobile)) {
+      newErrors.mobile = "رقم الهاتف يجب أن يحتوي على 8 أرقام.";
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = "كلمة المرور مطلوبة.";
+    } else if (password.length < 6) {
       newErrors.password = "كلمة السر يجب أن تحتوي على 6 أحرف على الأقل.";
-    if (password !== confirmPassword)
+    }
+
+    // Confirm Password validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "يرجى تأكيد كلمة المرور.";
+    } else if (password !== confirmPassword) {
       newErrors.confirmPassword = "كلمتا السر غير متطابقتين.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = () => {
     if (!validate()) return;
-    dispatch(register(fullName, mobile, password, 3, navigation));
+
+    dispatch(register(fullName, email, mobile, password, 4, navigation)); // Role 4 = Teacher
   };
 
   const inputStyle = (field) => [
@@ -45,7 +73,7 @@ export default function SignUpScreen({ navigation }) {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <ImageBackground
-        source={require("../../assets/images/ba1.png")}
+        source={require("../../../assets/images/ba1.png")}
         style={styles.background}
       >
         <ScrollView
@@ -54,14 +82,14 @@ export default function SignUpScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Image
-            source={require("../../assets/images/logocolors.png")}
+            source={require("../../../assets/images/logocolors.png")}
             style={styles.logo}
           />
-          <Text style={styles.title}> إبدأ رحلة تعلمية إستثنائية مع أبجيم 🚀 </Text>
-          <Text style={styles.title}>إنشاء حساب جديد</Text>
+          <Text style={styles.title}>إنشاء حساب معلم جديد 🧑‍🏫</Text>
 
           {error && <Text style={styles.errorText}>{error}</Text>}
 
+          {/* Full Name */}
           <Text style={styles.label}>الاسم الكامل</Text>
           <TextInput
             style={inputStyle("fullName")}
@@ -75,6 +103,22 @@ export default function SignUpScreen({ navigation }) {
           />
           {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
+          {/* Email */}
+          <Text style={styles.label}>البريد الإلكتروني</Text>
+          <TextInput
+            style={inputStyle("email")}
+            placeholder="أدخل البريد الإلكتروني"
+            placeholderTextColor="#888"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrors((prev) => ({ ...prev, email: null }));
+            }}
+          />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+          {/* Mobile */}
           <Text style={styles.label}>رقم الهاتف</Text>
           <TextInput
             style={inputStyle("mobile")}
@@ -89,6 +133,7 @@ export default function SignUpScreen({ navigation }) {
           />
           {errors.mobile && <Text style={styles.errorText}>{errors.mobile}</Text>}
 
+          {/* Password */}
           <Text style={styles.label}>كلمة المرور</Text>
           <TextInput
             style={inputStyle("password")}
@@ -103,6 +148,7 @@ export default function SignUpScreen({ navigation }) {
           />
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
+          {/* Confirm Password */}
           <Text style={styles.label}>تأكيد كلمة المرور</Text>
           <TextInput
             style={inputStyle("confirmPassword")}
@@ -119,6 +165,7 @@ export default function SignUpScreen({ navigation }) {
             <Text style={styles.errorText}>{errors.confirmPassword}</Text>
           )}
 
+          {/* Register Button */}
           <TouchableOpacity
             style={styles.buttonPrimary}
             onPress={handleRegister}
@@ -127,18 +174,14 @@ export default function SignUpScreen({ navigation }) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>إنشاء حساب</Text>
+              <Text style={styles.buttonText}>إنشاء حساب معلم</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
-            <Text style={styles.loginLink}>لديك حساب بالفعل؟ تسجيل الدخول</Text>
+          {/* Go Back */}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.loginLink}>رجوع إلى تسجيل الولي</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity onPress={() => navigation.navigate("SignUpTeacher")}>
-              <Text style={[styles.loginLink, { color: "#FF5722", marginTop: 15 }]}>
-                هل أنت معلم؟ سجل كمعلم هنا
-              </Text>
-            </TouchableOpacity> */}
         </ScrollView>
       </ImageBackground>
     </TouchableWithoutFeedback>
@@ -187,7 +230,7 @@ const styles = StyleSheet.create({
   buttonPrimary: {
     width: "90%",
     height: 50,
-    backgroundColor: "#17A2B8",
+    backgroundColor: "#1F3B64",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 25,
